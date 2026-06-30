@@ -107,7 +107,7 @@ int send_action_failed_fault(char *service, int code)
 {
     char error_string[1024];
     sprintf(error_string, "The requested SOAP action failed: error %d", code);
-    send_fault(service, "Receiver", "ter:Action", "ter:ActionFailed", "Action failed", error_string);
+    return send_fault(service, "Receiver", "ter:Action", "ter:ActionFailed", "Action failed", error_string);
 }
 
 int send_authentication_error()

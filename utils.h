@@ -115,7 +115,7 @@ int set_audio_codec(char *buffer, int buffer_len, int codec, int ver);
  * Return the number of servers written (0 if none). */
 int get_dns_server(char *buf, size_t len);
 int get_ntp_server(char *buf, size_t len);
-topic_expressions_t *parseTopicExpression(const char *input);
+topic_expressions_t *parse_topic_expression(const char *input);
 void free_topic_expression(topic_expressions_t *p);
 int is_topic_in_expression(const char *topic_expression, char *topic);
 void *reboot_thread(void *arg);
