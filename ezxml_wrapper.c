@@ -33,15 +33,6 @@ void init_xml(char *buffer, int buffer_size)
 }
 
 /**
- * Init xml parser
- * @param buffer The name of the xml file
- */
-void init_xml_from_file(char *file)
-{
-    root_xml = ezxml_parse_file(file);
-}
-
-/**
  * Close xml parser
  */
 void close_xml()

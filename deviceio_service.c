@@ -199,6 +199,7 @@ int deviceio_get_relay_output_options()
         }
         size += cat(dest, "deviceio_service_files/GetRelayOutputOptions_footer.xml", 0);
     }
+    return size;
 }
 
 int deviceio_set_relay_output_settings()

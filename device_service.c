@@ -431,7 +431,7 @@ int device_get_scopes()
 int device_get_users()
 {
     // For security reason, returns empty message instead of service_ctx.user
-    send_empty_response("tds", "GetUsers");
+    return send_empty_response("tds", "GetUsers");
 }
 
 int device_get_wsdl_url()
