@@ -1766,18 +1766,6 @@ static int is_valid_hostname_or_ip(const char *s)
     return 1;
 }
 
-int get_dns_server(char *buf, size_t len)
-{
-    char tmp[128] = "";
-    if (spawn_capture("scripts/get_dns.sh", tmp, sizeof(tmp), 2) <= 0) return -1;
-    size_t n = strlen(tmp);
-    while (n > 0 && (tmp[n-1] == '\n' || tmp[n-1] == '\r' || tmp[n-1] == ' ')) tmp[--n] = '\0';
-    if (!is_valid_ip(tmp) || n >= len) return -1;
-    strncpy(buf, tmp, len);
-    buf[len-1] = '\0';
-    return 0;
-}
-
 /*
  * Fork /bin/sh -c cmd, capture stdout, kill child after timeout_sec seconds.
  * Returns bytes captured (null-terminated in buf), or -1 on fork failure.
@@ -1830,6 +1818,18 @@ static ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout
     }
 
     return total;
+}
+
+int get_dns_server(char *buf, size_t len)
+{
+    char tmp[128] = "";
+    if (spawn_capture("scripts/get_dns.sh", tmp, sizeof(tmp), 2) <= 0) return -1;
+    size_t n = strlen(tmp);
+    while (n > 0 && (tmp[n-1] == '\n' || tmp[n-1] == '\r' || tmp[n-1] == ' ')) tmp[--n] = '\0';
+    if (!is_valid_ip(tmp) || n >= len) return -1;
+    strncpy(buf, tmp, len);
+    buf[len-1] = '\0';
+    return 0;
 }
 
 int get_ntp_server(char *buf, size_t len)
