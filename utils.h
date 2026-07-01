@@ -111,6 +111,8 @@ void gen_uuid_v5_mac(char *uuid_str, const uint8_t mac[6]);
 int get_from_query_string(char **ret, int *ret_size, char *par);
 int set_video_codec(char *buffer, int buffer_len, int codec, int ver);
 int set_audio_codec(char *buffer, int buffer_len, int codec, int ver);
+int get_dns_server(char *buf, size_t len);
+int get_ntp_server(char *buf, size_t len);
 topic_expressions_t *parseTopicExpression(const char *input);
 void free_topic_expression(topic_expressions_t *p);
 int is_topic_in_expression(const char *topic_expression, char *topic);

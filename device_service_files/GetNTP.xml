@@ -6,6 +6,7 @@
         <tds:GetNTPResponse>
             <tds:NTPInformation>
                 <tt:FromDHCP>false</tt:FromDHCP>
+                %NTP_BLOCK%
             </tds:NTPInformation>
         </tds:GetNTPResponse>
     </SOAP-ENV:Body>

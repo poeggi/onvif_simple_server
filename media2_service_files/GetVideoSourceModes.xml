@@ -5,7 +5,7 @@
     <SOAP-ENV:Body>
         <tr2:GetVideoSourceModesResponse>
             <tr2:VideoSourceModes Enabled="true" token="VideoSourceModeToken">
-                <tr2:MaxFramerate>20</tr2:MaxFramerate>
+                <tr2:MaxFramerate>%FRAMERATE%</tr2:MaxFramerate>
                 <tr2:MaxResolution>
                     <tt:Width>%WIDTH%</tt:Width>
                     <tt:Height>%HEIGHT%</tt:Height>

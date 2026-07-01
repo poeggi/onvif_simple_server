@@ -6,6 +6,7 @@
         <tds:GetDNSResponse>
             <tds:DNSInformation>
                 <tt:FromDHCP>false</tt:FromDHCP>
+                %DNS_BLOCK%
             </tds:DNSInformation>
         </tds:GetDNSResponse>
     </SOAP-ENV:Body>

@@ -5,7 +5,7 @@
     <SOAP-ENV:Body>
         <trt:GetVideoSourcesResponse>
             <trt:VideoSources token="VideoSourceToken">
-                <tt:Framerate>20</tt:Framerate>
+                <tt:Framerate>%FRAMERATE%</tt:Framerate>
                 <tt:Resolution>
                     <tt:Width>%WIDTH%</tt:Width>
                     <tt:Height>%HEIGHT%</tt:Height>

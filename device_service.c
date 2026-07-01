@@ -726,23 +726,54 @@ int device_get_network_protocols()
 
 int device_get_hostname()
 {
-    long size = cat(NULL, "device_service_files/GetHostname.xml", 0);
+    char hostname[256] = "";
+    gethostname(hostname, sizeof(hostname));
+
+    long size = cat(NULL, "device_service_files/GetHostname.xml", 2,
+            "%HOSTNAME%", hostname);
     output_http_headers(size);
-    return cat("stdout", "device_service_files/GetHostname.xml", 0);
+    return cat("stdout", "device_service_files/GetHostname.xml", 2,
+            "%HOSTNAME%", hostname);
 }
 
 int device_get_dns()
 {
-    long size = cat(NULL, "device_service_files/GetDNS.xml", 0);
+    char dns_addr[128];
+    char dns_block[256] = "";
+    if (get_dns_server(dns_addr, sizeof(dns_addr)) == 0) {
+        if (strchr(dns_addr, ':')) {
+            snprintf(dns_block, sizeof(dns_block),
+                    "<tt:DNSManual><tt:Type>IPv6</tt:Type><tt:IPv6Address>%s</tt:IPv6Address></tt:DNSManual>",
+                    dns_addr);
+        } else {
+            snprintf(dns_block, sizeof(dns_block),
+                    "<tt:DNSManual><tt:Type>IPv4</tt:Type><tt:IPv4Address>%s</tt:IPv4Address></tt:DNSManual>",
+                    dns_addr);
+        }
+    }
+
+    long size = cat(NULL, "device_service_files/GetDNS.xml", 2,
+            "%DNS_BLOCK%", dns_block);
     output_http_headers(size);
-    return cat("stdout", "device_service_files/GetDNS.xml", 0);
+    return cat("stdout", "device_service_files/GetDNS.xml", 2,
+            "%DNS_BLOCK%", dns_block);
 }
 
 int device_get_ntp()
 {
-    long size = cat(NULL, "device_service_files/GetNTP.xml", 0);
+    char ntp_srv[128];
+    char ntp_block[256] = "";
+    if (get_ntp_server(ntp_srv, sizeof(ntp_srv)) == 0) {
+        snprintf(ntp_block, sizeof(ntp_block),
+                "<tt:NTPManual><tt:Type>DNS</tt:Type><tt:DNSname>%s</tt:DNSname></tt:NTPManual>",
+                ntp_srv);
+    }
+
+    long size = cat(NULL, "device_service_files/GetNTP.xml", 2,
+            "%NTP_BLOCK%", ntp_block);
     output_http_headers(size);
-    return cat("stdout", "device_service_files/GetNTP.xml", 0);
+    return cat("stdout", "device_service_files/GetNTP.xml", 2,
+            "%NTP_BLOCK%", ntp_block);
 }
 
 int device_unsupported(const char *method)

@@ -218,6 +218,7 @@ int process_conf_file(char *file)
             service_ctx.profiles[service_ctx.profiles_num - 1].snapurl = NULL;
             service_ctx.profiles[service_ctx.profiles_num - 1].type = H264;
             service_ctx.profiles[service_ctx.profiles_num - 1].bitrate = 0;
+            service_ctx.profiles[service_ctx.profiles_num - 1].framerate = 30;
             service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder = AAC;
             service_ctx.profiles[service_ctx.profiles_num - 1].audio_decoder = AUDIO_NONE;
         } else if (strcasecmp(param, "width") == 0) {
@@ -263,6 +264,8 @@ int process_conf_file(char *file)
                 service_ctx.profiles[service_ctx.profiles_num - 1].type = H265;
         } else if (strcasecmp(param, "bitrate") == 0) {
             service_ctx.profiles[service_ctx.profiles_num - 1].bitrate = atoi(value);
+        } else if (strcasecmp(param, "framerate") == 0) {
+            service_ctx.profiles[service_ctx.profiles_num - 1].framerate = atoi(value);
         } else if (strcasecmp(param, "audio_encoder") == 0) {
             if (strcasecmp(value, "NONE") == 0)
                 service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder = AUDIO_NONE;
@@ -966,6 +969,7 @@ int process_json_conf_file(char *file)
                 service_ctx.profiles[service_ctx.profiles_num - 1].url = NULL;
                 service_ctx.profiles[service_ctx.profiles_num - 1].snapurl = NULL;
                 service_ctx.profiles[service_ctx.profiles_num - 1].type = H264;
+                service_ctx.profiles[service_ctx.profiles_num - 1].framerate = 30;
                 service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder = AAC;
                 service_ctx.profiles[service_ctx.profiles_num - 1].audio_decoder = AUDIO_NONE;
 
@@ -987,6 +991,7 @@ int process_json_conf_file(char *file)
                 }
                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].width), item, "width");
                 get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].height), item, "height");
+                get_int_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].framerate), item, "framerate");
                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].url), item, "url");
                 get_string_from_json(&(service_ctx.profiles[service_ctx.profiles_num - 1].snapurl), item, "snapurl");
                 tmp = NULL;
@@ -1037,6 +1042,7 @@ int process_json_conf_file(char *file)
                 log_debug("\turl: %s", service_ctx.profiles[service_ctx.profiles_num - 1].url);
                 log_debug("\tsnapurl: %s", service_ctx.profiles[service_ctx.profiles_num - 1].snapurl);
                 log_debug("\ttype: %d", service_ctx.profiles[service_ctx.profiles_num - 1].type);
+                log_debug("\tframerate: %d", service_ctx.profiles[service_ctx.profiles_num - 1].framerate);
                 log_debug("\taudio_encoder: %d", service_ctx.profiles[service_ctx.profiles_num - 1].audio_encoder);
                 log_debug("\taudio_decoder: %d", service_ctx.profiles[service_ctx.profiles_num - 1].audio_decoder);
                 log_debug("");

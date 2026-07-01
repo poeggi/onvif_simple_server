@@ -39,19 +39,22 @@ int media_get_service_capabilities()
 int media_get_video_sources()
 {
     // Get the video source from the 1st profile
-    char stmp_w[16], stmp_h[16];
+    char stmp_w[16], stmp_h[16], stmp_fps[8];
 
     sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
     sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
-    long size = cat(NULL, "media_service_files/GetVideoSources.xml", 4,
+    sprintf(stmp_fps, "%d", service_ctx.profiles[0].framerate);
+    long size = cat(NULL, "media_service_files/GetVideoSources.xml", 6,
             "%WIDTH%", stmp_w,
-            "%HEIGHT%", stmp_h);
+            "%HEIGHT%", stmp_h,
+            "%FRAMERATE%", stmp_fps);
 
     output_http_headers(size);
 
-    return cat("stdout", "media_service_files/GetVideoSources.xml", 4,
+    return cat("stdout", "media_service_files/GetVideoSources.xml", 6,
             "%WIDTH%", stmp_w,
-            "%HEIGHT%", stmp_h);
+            "%HEIGHT%", stmp_h,
+            "%FRAMERATE%", stmp_fps);
 }
 
 int media_get_video_source_configurations()

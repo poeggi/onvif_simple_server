@@ -385,20 +385,24 @@ int media2_get_video_source_modes()
     if (strcasecmp("VideoSourceToken", token) == 0) {
 
         // Get data from profile 0
+        char stmp_fps[8];
         sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
         sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
+        sprintf(stmp_fps, "%d", service_ctx.profiles[0].framerate);
         set_video_codec(video_enc, 16, service_ctx.profiles[0].type, 2);
-        long size = cat(NULL, "media2_service_files/GetVideoSourceModes.xml", 6,
+        long size = cat(NULL, "media2_service_files/GetVideoSourceModes.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
-                "%VIDEO_ENCODING%", video_enc);
+                "%VIDEO_ENCODING%", video_enc,
+                "%FRAMERATE%", stmp_fps);
 
         output_http_headers(size);
 
-        return cat("stdout", "media2_service_files/GetVideoSourceModes.xml", 6,
+        return cat("stdout", "media2_service_files/GetVideoSourceModes.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
-                "%VIDEO_ENCODING%", video_enc);
+                "%VIDEO_ENCODING%", video_enc,
+                "%FRAMERATE%", stmp_fps);
 
     } else {
         send_fault("media2_service", "Sender", "ter:InvalidArgVal", "ter:NoVideoSource", "No video source", "The requested video source does not exist");

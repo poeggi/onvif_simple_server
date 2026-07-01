@@ -1744,6 +1744,74 @@ int is_topic_in_expression(const char *topic_expression, char *topic)
 }
 
 /**
+ * Read first nameserver from /etc/resolv.conf into buf.
+ * Returns 0 on success, -1 on error.
+ */
+int get_dns_server(char *buf, size_t len)
+{
+    FILE *f = fopen("/etc/resolv.conf", "r");
+    if (!f) return -1;
+    char line[256];
+    int found = 0;
+    while (fgets(line, sizeof(line), f)) {
+        if (strncmp(line, "nameserver ", 11) != 0) continue;
+        char *p = line + 11;
+        while (*p == ' ' || *p == '\t') p++;
+        size_t plen = strlen(p);
+        while (plen > 0 && (p[plen-1] == '\n' || p[plen-1] == '\r' || p[plen-1] == ' '))
+            p[--plen] = '\0';
+        if (plen > 0 && plen < len) {
+            strncpy(buf, p, len);
+            buf[len-1] = '\0';
+            found = 1;
+            break;
+        }
+    }
+    fclose(f);
+    return found ? 0 : -1;
+}
+
+/**
+ * Read first NTP server from /etc/systemd/timesyncd.conf or /etc/ntp.conf into buf.
+ * Returns 0 on success, -1 on error.
+ */
+int get_ntp_server(char *buf, size_t len)
+{
+    const char *paths[] = {
+        "/etc/systemd/timesyncd.conf",
+        "/etc/ntp.conf",
+        NULL
+    };
+    for (int i = 0; paths[i] != NULL; i++) {
+        FILE *f = fopen(paths[i], "r");
+        if (!f) continue;
+        char line[256];
+        char *p = NULL;
+        while (fgets(line, sizeof(line), f)) {
+            if (strncmp(line, "NTP=", 4) == 0)
+                p = line + 4;
+            else if (strncmp(line, "server ", 7) == 0)
+                p = line + 7;
+            if (p && *p && *p != '\n') {
+                while (*p == ' ' || *p == '\t') p++;
+                char *end = p;
+                while (*end && *end != ' ' && *end != '\t' && *end != '\n' && *end != '\r') end++;
+                size_t slen = (size_t)(end - p);
+                if (slen > 0 && slen < len) {
+                    strncpy(buf, p, slen);
+                    buf[slen] = '\0';
+                    fclose(f);
+                    return 0;
+                }
+            }
+            p = NULL;
+        }
+        fclose(f);
+    }
+    return -1;
+}
+
+/**
  * Thread function to run a reboot
  * @param arg Not used
  * @return NULL

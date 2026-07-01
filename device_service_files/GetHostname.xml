@@ -6,6 +6,7 @@
         <tds:GetHostnameResponse>
             <tds:HostnameInformation>
                 <tt:FromDHCP>false</tt:FromDHCP>
+                <tt:Name>%HOSTNAME%</tt:Name>
             </tds:HostnameInformation>
         </tds:GetHostnameResponse>
     </SOAP-ENV:Body>

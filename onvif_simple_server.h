@@ -60,6 +60,7 @@ typedef struct {
     char *snapurl;
     int  type;
     int  bitrate;       /* kbps, 0 = unknown */
+    int  framerate;     /* fps, 0 = unknown */
     int  audio_encoder;
     int  audio_decoder;
 } stream_profile_t;
