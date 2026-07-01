@@ -24,7 +24,6 @@
 #include <sys/select.h>
 #include <sys/wait.h>
 #include <signal.h>
-#include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -1767,60 +1766,16 @@ static int is_valid_hostname_or_ip(const char *s)
     return 1;
 }
 
-/**
- * Read first non-loopback nameserver into buf using the resolver state.
- * Falls back to /run/systemd/resolve/resolv.conf on systemd-resolved systems
- * where res_init() returns only the 127.0.0.53 stub.
- * Returns 0 on success, -1 on error.
- */
 int get_dns_server(char *buf, size_t len)
 {
-    if (res_init() == 0) {
-        for (int i = 0; i < _res.nscount; i++) {
-            const char *a = inet_ntoa(_res.nsaddr_list[i].sin_addr);
-            if (a && strncmp(a, "127.", 4) != 0 && is_valid_ip(a)) {
-                strncpy(buf, a, len);
-                buf[len-1] = '\0';
-                return 0;
-            }
-        }
-    }
-    /* All entries were loopback (systemd-resolved stub) -- read real upstream list. */
-    FILE *f = fopen("/run/systemd/resolve/resolv.conf", "r");
-    if (!f) return -1;
-    char line[256];
-    int found = 0;
-    while (fgets(line, sizeof(line), f)) {
-        if (strncmp(line, "nameserver ", 11) != 0) continue;
-        char *p = line + 11;
-        while (*p == ' ' || *p == '\t') p++;
-        size_t plen = strlen(p);
-        while (plen > 0 && (p[plen-1] == '\n' || p[plen-1] == '\r' || p[plen-1] == ' '))
-            p[--plen] = '\0';
-        if (plen > 0 && plen < len) {
-            strncpy(buf, p, len);
-            buf[len-1] = '\0';
-            if (is_valid_ip(buf)) {
-                found = 1;
-                break;
-            }
-        }
-    }
-    fclose(f);
-    return found ? 0 : -1;
-}
-
-/* Extract first whitespace/newline-delimited token from src into dst. */
-static void extract_first_token(const char *src, char *dst, size_t dstlen)
-{
-    while (*src == ' ' || *src == '\t') src++;
-    const char *end = src;
-    while (*end && *end != ' ' && *end != '\t' && *end != '\n' && *end != '\r') end++;
-    size_t n = (size_t)(end - src);
-    if (n > 0 && n < dstlen) {
-        memcpy(dst, src, n);
-        dst[n] = '\0';
-    }
+    char tmp[128] = "";
+    if (spawn_capture("scripts/get_dns.sh", tmp, sizeof(tmp), 2) <= 0) return -1;
+    size_t n = strlen(tmp);
+    while (n > 0 && (tmp[n-1] == '\n' || tmp[n-1] == '\r' || tmp[n-1] == ' ')) tmp[--n] = '\0';
+    if (!is_valid_ip(tmp) || n >= len) return -1;
+    strncpy(buf, tmp, len);
+    buf[len-1] = '\0';
+    return 0;
 }
 
 /*
@@ -1877,69 +1832,16 @@ static ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout
     return total;
 }
 
-/**
- * Return the active NTP server name into buf.
- * Tries systemd-timesyncd (timedatectl show-timesync) first, then chrony
- * (chronyc tracking). Children are killed after a 2s hard deadline.
- * Returns 0 on success, -1 if no server could be determined.
- */
 int get_ntp_server(char *buf, size_t len)
 {
-    char out[4096];
-    char *line, *nl;
-
-    /* timedatectl show-timesync (systemd-timesyncd) */
-    if (spawn_capture("timedatectl show-timesync 2>/dev/null", out, sizeof(out), 2) > 0) {
-        char server_name[128] = "", system_ntp[128] = "", fallback_ntp[128] = "";
-        line = out;
-        while (*line) {
-            nl = strchr(line, '\n');
-            if (nl) *nl = '\0';
-            if      (strncmp(line, "ServerName=",        11) == 0) extract_first_token(line + 11, server_name,  sizeof(server_name));
-            else if (strncmp(line, "SystemNTPServers=",  17) == 0) extract_first_token(line + 17, system_ntp,   sizeof(system_ntp));
-            else if (strncmp(line, "FallbackNTPServers=",19) == 0) extract_first_token(line + 19, fallback_ntp, sizeof(fallback_ntp));
-            line = nl ? nl + 1 : line + strlen(line);
-        }
-        const char *best = *server_name ? server_name : (*system_ntp ? system_ntp : fallback_ntp);
-        if (*best && is_valid_hostname_or_ip(best) && strlen(best) < len) {
-            strncpy(buf, best, len);
-            buf[len-1] = '\0';
-            return 0;
-        }
-    }
-
-    /* chronyc tracking (chrony): parse "Reference ID    : XXXX (hostname)" */
-    if (spawn_capture("chronyc tracking 2>/dev/null", out, sizeof(out), 2) > 0) {
-        line = out;
-        while (*line) {
-            nl = strchr(line, '\n');
-            if (nl) *nl = '\0';
-            if (strncmp(line, "Reference ID", 12) == 0) {
-                const char *op = strchr(line, '(');
-                const char *cp = strrchr(line, ')');
-                if (op && cp && cp > op + 1) {
-                    op++;
-                    size_t n = (size_t)(cp - op);
-                    if (n > 0 && n < sizeof(out)) {
-                        char tmp[256] = "";
-                        if (n < sizeof(tmp)) {
-                            memcpy(tmp, op, n);
-                            tmp[n] = '\0';
-                            if (is_valid_hostname_or_ip(tmp) && n < len) {
-                                strncpy(buf, tmp, len);
-                                buf[len-1] = '\0';
-                                return 0;
-                            }
-                        }
-                    }
-                }
-                break;
-            }
-            line = nl ? nl + 1 : line + strlen(line);
-        }
-    }
-
-    return -1;
+    char tmp[256] = "";
+    if (spawn_capture("scripts/get_ntp.sh", tmp, sizeof(tmp), 2) <= 0) return -1;
+    size_t n = strlen(tmp);
+    while (n > 0 && (tmp[n-1] == '\n' || tmp[n-1] == '\r' || tmp[n-1] == ' ')) tmp[--n] = '\0';
+    if (!is_valid_hostname_or_ip(tmp) || n >= len) return -1;
+    strncpy(buf, tmp, len);
+    buf[len-1] = '\0';
+    return 0;
 }
 
 /**
