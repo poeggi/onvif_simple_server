@@ -1799,22 +1799,17 @@ static void extract_first_token(const char *src, char *dst, size_t dstlen)
     }
 }
 
-/**
- * Query the active NTP server from timedatectl show-timesync.
- * Priority: ServerName > SystemNTPServers > FallbackNTPServers.
- * Uses select() with a 2s timeout so the call never blocks indefinitely.
- * Returns 0 on success, -1 on error or timeout.
- */
-int get_ntp_server(char *buf, size_t len)
+/* Run cmd with a 2s select() guard; call parse_fn on each line until it returns 1. */
+static int popen_with_timeout(const char *cmd,
+                              int (*parse_fn)(const char *line, char *out, size_t outlen),
+                              char *out, size_t outlen)
 {
-    FILE *fp = popen("timedatectl show-timesync 2>/dev/null", "r");
+    FILE *fp = popen(cmd, "r");
     if (!fp) return -1;
 
     int fd = fileno(fp);
+    int found = 0;
     char line[256];
-    char server_name[128] = "";
-    char system_ntp[128]  = "";
-    char fallback_ntp[128] = "";
 
     struct timeval tv = { .tv_sec = 2, .tv_usec = 0 };
     fd_set rfds;
@@ -1823,21 +1818,68 @@ int get_ntp_server(char *buf, size_t len)
 
     if (select(fd + 1, &rfds, NULL, NULL, &tv) > 0) {
         while (fgets(line, sizeof(line), fp)) {
-            if      (strncmp(line, "ServerName=",        11) == 0) extract_first_token(line + 11, server_name,  sizeof(server_name));
-            else if (strncmp(line, "SystemNTPServers=",  17) == 0) extract_first_token(line + 17, system_ntp,   sizeof(system_ntp));
-            else if (strncmp(line, "FallbackNTPServers=",19) == 0) extract_first_token(line + 19, fallback_ntp, sizeof(fallback_ntp));
+            if (parse_fn(line, out, outlen)) { found = 1; break; }
         }
     }
 
     pclose(fp);
+    return found ? 0 : -1;
+}
 
-    const char *best = *server_name ? server_name : (*system_ntp ? system_ntp : fallback_ntp);
+/* Parser for timedatectl show-timesync: collects best of three keys in one pass. */
+static char td_server_name[128], td_system_ntp[128], td_fallback_ntp[128];
+
+static int parse_timedatectl(const char *line, char *out, size_t outlen)
+{
+    if      (strncmp(line, "ServerName=",        11) == 0) extract_first_token(line + 11, td_server_name,  sizeof(td_server_name));
+    else if (strncmp(line, "SystemNTPServers=",  17) == 0) extract_first_token(line + 17, td_system_ntp,   sizeof(td_system_ntp));
+    else if (strncmp(line, "FallbackNTPServers=",19) == 0) extract_first_token(line + 19, td_fallback_ntp, sizeof(td_fallback_ntp));
+    (void)out; (void)outlen;
+    return 0; /* always read all lines */
+}
+
+static int timedatectl_pick_best(char *buf, size_t len)
+{
+    td_server_name[0] = td_system_ntp[0] = td_fallback_ntp[0] = '\0';
+    popen_with_timeout("timedatectl show-timesync 2>/dev/null",
+                       parse_timedatectl, NULL, 0);
+    const char *best = *td_server_name ? td_server_name
+                     : (*td_system_ntp  ? td_system_ntp : td_fallback_ntp);
     if (*best && strlen(best) < len) {
         strncpy(buf, best, len);
         buf[len-1] = '\0';
         return 0;
     }
     return -1;
+}
+
+/* Parser for chronyc tracking: extracts hostname from "Reference ID : XX (name)".
+   Requires a dot to filter out LOCAL(0) and unresolved hex IDs. */
+static int parse_chronyc(const char *line, char *out, size_t outlen)
+{
+    if (strncmp(line, "Reference ID", 12) != 0) return 0;
+    const char *op = strchr(line, '(');
+    const char *cp = strrchr(line, ')');
+    if (!op || !cp || cp <= op + 1) return 0;
+    op++;
+    size_t n = (size_t)(cp - op);
+    if (n == 0 || n >= outlen) return 0;
+    memcpy(out, op, n);
+    out[n] = '\0';
+    return strchr(out, '.') != NULL; /* only accept if it looks like a hostname/IP */
+}
+
+/**
+ * Return the active NTP server name into buf.
+ * Tries systemd-timesyncd (timedatectl show-timesync) first, then chrony
+ * (chronyc tracking). Both calls are guarded by a 2s select() timeout.
+ * Returns 0 on success, -1 if no server could be determined.
+ */
+int get_ntp_server(char *buf, size_t len)
+{
+    if (timedatectl_pick_best(buf, len) == 0) return 0;
+    return popen_with_timeout("chronyc tracking 2>/dev/null",
+                              parse_chronyc, buf, len);
 }
 
 /**
