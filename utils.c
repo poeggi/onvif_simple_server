@@ -1786,8 +1786,22 @@ int get_dns_server(char *buf, size_t len)
     return found ? 0 : -1;
 }
 
+/* Extract first whitespace/newline-delimited token from src into dst. */
+static void extract_first_token(const char *src, char *dst, size_t dstlen)
+{
+    while (*src == ' ' || *src == '\t') src++;
+    const char *end = src;
+    while (*end && *end != ' ' && *end != '\t' && *end != '\n' && *end != '\r') end++;
+    size_t n = (size_t)(end - src);
+    if (n > 0 && n < dstlen) {
+        memcpy(dst, src, n);
+        dst[n] = '\0';
+    }
+}
+
 /**
  * Query the active NTP server from timedatectl show-timesync.
+ * Priority: ServerName > SystemNTPServers > FallbackNTPServers.
  * Uses select() with a 2s timeout so the call never blocks indefinitely.
  * Returns 0 on success, -1 on error or timeout.
  */
@@ -1796,9 +1810,11 @@ int get_ntp_server(char *buf, size_t len)
     FILE *fp = popen("timedatectl show-timesync 2>/dev/null", "r");
     if (!fp) return -1;
 
-    int found = 0;
     int fd = fileno(fp);
     char line[256];
+    char server_name[128] = "";
+    char system_ntp[128]  = "";
+    char fallback_ntp[128] = "";
 
     struct timeval tv = { .tv_sec = 2, .tv_usec = 0 };
     fd_set rfds;
@@ -1807,22 +1823,21 @@ int get_ntp_server(char *buf, size_t len)
 
     if (select(fd + 1, &rfds, NULL, NULL, &tv) > 0) {
         while (fgets(line, sizeof(line), fp)) {
-            if (strncmp(line, "ServerName=", 11) != 0) continue;
-            char *p = line + 11;
-            size_t plen = strlen(p);
-            while (plen > 0 && (p[plen-1] == '\n' || p[plen-1] == '\r'))
-                p[--plen] = '\0';
-            if (plen > 0 && plen < len) {
-                strncpy(buf, p, len);
-                buf[len-1] = '\0';
-                found = 1;
-            }
-            break;
+            if      (strncmp(line, "ServerName=",        11) == 0) extract_first_token(line + 11, server_name,  sizeof(server_name));
+            else if (strncmp(line, "SystemNTPServers=",  17) == 0) extract_first_token(line + 17, system_ntp,   sizeof(system_ntp));
+            else if (strncmp(line, "FallbackNTPServers=",19) == 0) extract_first_token(line + 19, fallback_ntp, sizeof(fallback_ntp));
         }
     }
 
     pclose(fp);
-    return found ? 0 : -1;
+
+    const char *best = *server_name ? server_name : (*system_ntp ? system_ntp : fallback_ntp);
+    if (*best && strlen(best) < len) {
+        strncpy(buf, best, len);
+        buf[len-1] = '\0';
+        return 0;
+    }
+    return -1;
 }
 
 /**
