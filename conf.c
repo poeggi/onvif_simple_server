@@ -977,7 +977,6 @@ int process_json_conf_file(char *file)
                 char *n = service_ctx.profiles[service_ctx.profiles_num - 1].name;
                 if (n != NULL) {
                     size_t nlen = strlen(n);
-                    while (nlen > 0 && n[nlen - 1] == '_') n[--nlen] = '\0';
                     if (nlen > 64) {
                         log_warn("Profile name '%s' exceeds 64 chars; truncating", n);
                         n[64] = '\0';
