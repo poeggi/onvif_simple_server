@@ -6,20 +6,20 @@ OBJECTS_N = onvif_notify_server.o conf.o utils.o log.o ezxml_wrapper.o ezxml/ezx
 OBJECTS_W = wsd_simple_server.o utils.o log.o ezxml_wrapper.o ezxml/ezxml.o
 ifdef HAVE_WOLFSSL
 INCLUDE = -DHAVE_WOLFSSL -ffunction-sections -fdata-sections
-LIBS_O = -Wl,--gc-sections -lwolfssl -lz -ljson-c -lpthread -lrt
-LIBS_N = -Wl,--gc-sections -lwolfssl -ljson-c -lpthread -lrt
+LIBS_O = -Wl,--gc-sections -lwolfssl -lz -ljson-c -lpthread -lrt -lresolv
+LIBS_N = -Wl,--gc-sections -lwolfssl -ljson-c -lpthread -lrt -lresolv
 else
 ifdef HAVE_MBEDTLS
 INCLUDE = -DHAVE_MBEDTLS -ffunction-sections -fdata-sections
-LIBS_O = -Wl,--gc-sections -lmbedcrypto -lz -ljson-c -lpthread -lrt
-LIBS_N = -Wl,--gc-sections -lmbedcrypto -ljson-c -lpthread -lrt
+LIBS_O = -Wl,--gc-sections -lmbedcrypto -lz -ljson-c -lpthread -lrt -lresolv
+LIBS_N = -Wl,--gc-sections -lmbedcrypto -ljson-c -lpthread -lrt -lresolv
 else
 INCLUDE = -ffunction-sections -fdata-sections
-LIBS_O = -Wl,--gc-sections -ltomcrypt -lz -ljson-c -lpthread -lrt
-LIBS_N = -Wl,--gc-sections -ltomcrypt -ljson-c -lpthread -lrt
+LIBS_O = -Wl,--gc-sections -ltomcrypt -lz -ljson-c -lpthread -lrt -lresolv
+LIBS_N = -Wl,--gc-sections -ltomcrypt -ljson-c -lpthread -lrt -lresolv
 endif
 endif
-LIBS_W = -Wl,--gc-sections
+LIBS_W = -Wl,--gc-sections -lresolv
 
 ifdef USE_ZLIB
 DUSE_ZLIB = -DUSE_ZLIB
@@ -62,7 +62,7 @@ test: test/test_utils
 test/test_utils: test/test_utils.c test/stubs.c utils.c log.c
 	cc -I. -Itest -DHAVE_MBEDTLS -D_GNU_SOURCE -std=c99 \
 		test/test_utils.c test/stubs.c utils.c log.c \
-		-lz -lpthread -lrt -o test/test_utils
+		-lz -lpthread -lrt -lresolv -o test/test_utils
 
 clean:
 	rm -f onvif_simple_server

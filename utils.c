@@ -21,6 +21,8 @@
 #include <net/if.h> 
 #include <netinet/in.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
+#include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -1744,12 +1746,25 @@ int is_topic_in_expression(const char *topic_expression, char *topic)
 }
 
 /**
- * Read first nameserver from /etc/resolv.conf into buf.
+ * Read first non-loopback nameserver into buf using the resolver state.
+ * Falls back to /run/systemd/resolve/resolv.conf on systemd-resolved systems
+ * where res_init() returns only the 127.0.0.53 stub.
  * Returns 0 on success, -1 on error.
  */
 int get_dns_server(char *buf, size_t len)
 {
-    FILE *f = fopen("/etc/resolv.conf", "r");
+    if (res_init() == 0) {
+        for (int i = 0; i < _res.nscount; i++) {
+            const char *a = inet_ntoa(_res.nsaddr_list[i].sin_addr);
+            if (a && strncmp(a, "127.", 4) != 0) {
+                strncpy(buf, a, len);
+                buf[len-1] = '\0';
+                return 0;
+            }
+        }
+    }
+    /* All entries loopback (systemd-resolved stub) — read real upstream list. */
+    FILE *f = fopen("/run/systemd/resolve/resolv.conf", "r");
     if (!f) return -1;
     char line[256];
     int found = 0;
@@ -1772,43 +1787,42 @@ int get_dns_server(char *buf, size_t len)
 }
 
 /**
- * Read first NTP server from /etc/systemd/timesyncd.conf or /etc/ntp.conf into buf.
- * Returns 0 on success, -1 on error.
+ * Query the active NTP server from timedatectl show-timesync.
+ * Uses select() with a 2s timeout so the call never blocks indefinitely.
+ * Returns 0 on success, -1 on error or timeout.
  */
 int get_ntp_server(char *buf, size_t len)
 {
-    const char *paths[] = {
-        "/etc/systemd/timesyncd.conf",
-        "/etc/ntp.conf",
-        NULL
-    };
-    for (int i = 0; paths[i] != NULL; i++) {
-        FILE *f = fopen(paths[i], "r");
-        if (!f) continue;
-        char line[256];
-        char *p = NULL;
-        while (fgets(line, sizeof(line), f)) {
-            if (strncmp(line, "NTP=", 4) == 0)
-                p = line + 4;
-            else if (strncmp(line, "server ", 7) == 0)
-                p = line + 7;
-            if (p && *p && *p != '\n') {
-                while (*p == ' ' || *p == '\t') p++;
-                char *end = p;
-                while (*end && *end != ' ' && *end != '\t' && *end != '\n' && *end != '\r') end++;
-                size_t slen = (size_t)(end - p);
-                if (slen > 0 && slen < len) {
-                    strncpy(buf, p, slen);
-                    buf[slen] = '\0';
-                    fclose(f);
-                    return 0;
-                }
+    FILE *fp = popen("timedatectl show-timesync 2>/dev/null", "r");
+    if (!fp) return -1;
+
+    int found = 0;
+    int fd = fileno(fp);
+    char line[256];
+
+    struct timeval tv = { .tv_sec = 2, .tv_usec = 0 };
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(fd, &rfds);
+
+    if (select(fd + 1, &rfds, NULL, NULL, &tv) > 0) {
+        while (fgets(line, sizeof(line), fp)) {
+            if (strncmp(line, "ServerName=", 11) != 0) continue;
+            char *p = line + 11;
+            size_t plen = strlen(p);
+            while (plen > 0 && (p[plen-1] == '\n' || p[plen-1] == '\r'))
+                p[--plen] = '\0';
+            if (plen > 0 && plen < len) {
+                strncpy(buf, p, len);
+                buf[len-1] = '\0';
+                found = 1;
             }
-            p = NULL;
+            break;
         }
-        fclose(f);
     }
-    return -1;
+
+    pclose(fp);
+    return found ? 0 : -1;
 }
 
 /**
