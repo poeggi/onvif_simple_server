@@ -1159,9 +1159,8 @@ int ptz_remove_preset()
 
 int ptz_unsupported(const char *method)
 {
-    if (service_ctx.adv_fault_if_unknown == 1)
-        send_action_failed_fault("ptz_service", -1);
-    else
-        send_empty_response("tptz", (char *) method);
-    return -1;
+    /* An unimplemented action must return a SOAP fault, not an empty 200
+     * response (ONVIF: env:Receiver / ter:ActionNotSupported). */
+    (void) method;
+    return send_action_not_supported_fault("ptz_service");
 }

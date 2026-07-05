@@ -110,6 +110,13 @@ int send_action_failed_fault(char *service, int code)
     return send_fault(service, "Receiver", "ter:Action", "ter:ActionFailed", "Action failed", error_string);
 }
 
+int send_action_not_supported_fault(char *service)
+{
+    return send_fault(service, "Receiver", "ter:ActionNotSupported", "ter:NotSupported",
+            "Optional Action Not Implemented",
+            "The requested action is not implemented by the device.");
+}
+
 int send_authentication_error()
 {
     long size = cat(NULL, "generic_files/AuthenticationError.xml", 0);
