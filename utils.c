@@ -1820,28 +1820,63 @@ static ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout
     return total;
 }
 
-int get_dns_server(char *buf, size_t len)
+/*
+ * Split raw (newline-separated) into lines, validate each with is_valid(),
+ * and write the accepted lines newline-separated into buf. The helper scripts
+ * already de-duplicate, so no de-dup is done here. Returns the number of
+ * servers written (0 if none fit or none are valid).
+ */
+static int filter_servers(char *raw, char *buf, size_t len,
+                          int (*is_valid)(const char *))
 {
-    char tmp[128] = "";
-    if (spawn_capture("scripts/get_dns.sh", tmp, sizeof(tmp), 2) <= 0) return -1;
-    size_t n = strlen(tmp);
-    while (n > 0 && (tmp[n-1] == '\n' || tmp[n-1] == '\r' || tmp[n-1] == ' ')) tmp[--n] = '\0';
-    if (!is_valid_ip(tmp) || n >= len) return -1;
-    strncpy(buf, tmp, len);
-    buf[len-1] = '\0';
-    return 0;
+    int count = 0;
+    size_t used = 0;
+    char *save = NULL;
+    char *line;
+
+    if (len == 0) return 0;
+    buf[0] = '\0';
+
+    for (line = strtok_r(raw, "\r\n", &save);
+         line != NULL;
+         line = strtok_r(NULL, "\r\n", &save)) {
+        size_t l;
+        /* Trim surrounding whitespace. */
+        while (*line == ' ' || *line == '\t') line++;
+        l = strlen(line);
+        while (l > 0 && (line[l-1] == ' ' || line[l-1] == '\t')) line[--l] = '\0';
+        if (l == 0 || !is_valid(line)) continue;
+        /* Need room for an optional separator, the entry, and the NUL. */
+        if (used + (count > 0 ? 1 : 0) + l + 1 > len) break;
+        if (count > 0) buf[used++] = '\n';
+        memcpy(buf + used, line, l);
+        used += l;
+        buf[used] = '\0';
+        count++;
+    }
+    return count;
 }
 
+/*
+ * Fill buf with every configured DNS server address (newline-separated).
+ * Returns the number of servers written (0 if none).
+ */
+int get_dns_server(char *buf, size_t len)
+{
+    char tmp[512] = "";
+    if (spawn_capture("scripts/get_dns.sh", tmp, sizeof(tmp), 2) <= 0) return 0;
+    return filter_servers(tmp, buf, len, is_valid_ip);
+}
+
+/*
+ * Fill buf with every configured NTP server (newline-separated).
+ * Returns the number of servers written (0 if none).
+ */
 int get_ntp_server(char *buf, size_t len)
 {
-    char tmp[256] = "";
-    if (spawn_capture("scripts/get_ntp.sh", tmp, sizeof(tmp), 2) <= 0) return -1;
-    size_t n = strlen(tmp);
-    while (n > 0 && (tmp[n-1] == '\n' || tmp[n-1] == '\r' || tmp[n-1] == ' ')) tmp[--n] = '\0';
-    if (!is_valid_hostname_or_ip(tmp) || n >= len) return -1;
-    strncpy(buf, tmp, len);
-    buf[len-1] = '\0';
-    return 0;
+    char tmp[512] = "";
+    if (spawn_capture("scripts/get_ntp.sh", tmp, sizeof(tmp), 2) <= 0) return 0;
+    return filter_servers(tmp, buf, len, is_valid_hostname_or_ip);
 }
 
 /**

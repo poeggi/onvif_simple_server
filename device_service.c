@@ -738,17 +738,25 @@ int device_get_hostname()
 
 int device_get_dns()
 {
-    char dns_addr[128];
-    char dns_block[256] = "";
-    if (get_dns_server(dns_addr, sizeof(dns_addr)) == 0) {
-        if (strchr(dns_addr, ':')) {
-            snprintf(dns_block, sizeof(dns_block),
-                    "<tt:DNSManual><tt:Type>IPv6</tt:Type><tt:IPv6Address>%s</tt:IPv6Address></tt:DNSManual>",
-                    dns_addr);
-        } else {
-            snprintf(dns_block, sizeof(dns_block),
-                    "<tt:DNSManual><tt:Type>IPv4</tt:Type><tt:IPv4Address>%s</tt:IPv4Address></tt:DNSManual>",
-                    dns_addr);
+    /* GetDNS returns tt:DNSInformation, whose DNSManual element is an
+     * unbounded list: report every configured resolver, one entry each. */
+    char dns_list[512];
+    char dns_block[2048] = "";
+    if (get_dns_server(dns_list, sizeof(dns_list)) > 0) {
+        char *save = NULL;
+        char *s;
+        for (s = strtok_r(dns_list, "\n", &save); s != NULL; s = strtok_r(NULL, "\n", &save)) {
+            char entry[256];
+            if (strchr(s, ':')) {
+                snprintf(entry, sizeof(entry),
+                        "<tt:DNSManual><tt:Type>IPv6</tt:Type><tt:IPv6Address>%s</tt:IPv6Address></tt:DNSManual>",
+                        s);
+            } else {
+                snprintf(entry, sizeof(entry),
+                        "<tt:DNSManual><tt:Type>IPv4</tt:Type><tt:IPv4Address>%s</tt:IPv4Address></tt:DNSManual>",
+                        s);
+            }
+            strncat(dns_block, entry, sizeof(dns_block) - strlen(dns_block) - 1);
         }
     }
 
@@ -761,12 +769,34 @@ int device_get_dns()
 
 int device_get_ntp()
 {
-    char ntp_srv[128];
-    char ntp_block[256] = "";
-    if (get_ntp_server(ntp_srv, sizeof(ntp_srv)) == 0) {
-        snprintf(ntp_block, sizeof(ntp_block),
-                "<tt:NTPManual><tt:Type>DNS</tt:Type><tt:DNSname>%s</tt:DNSname></tt:NTPManual>",
-                ntp_srv);
+    /* GetNTP returns tt:NTPInformation, whose NTPManual element is an
+     * unbounded list: report every configured NTP server, one entry each.
+     * NetworkHost Type reflects whether the entry is an IPv4/IPv6 literal
+     * or a DNS name. */
+    char ntp_list[512];
+    char ntp_block[2048] = "";
+    if (get_ntp_server(ntp_list, sizeof(ntp_list)) > 0) {
+        char *save = NULL;
+        char *s;
+        struct in_addr v4;
+        struct in6_addr v6;
+        for (s = strtok_r(ntp_list, "\n", &save); s != NULL; s = strtok_r(NULL, "\n", &save)) {
+            char entry[320];
+            if (inet_pton(AF_INET, s, &v4) == 1) {
+                snprintf(entry, sizeof(entry),
+                        "<tt:NTPManual><tt:Type>IPv4</tt:Type><tt:IPv4Address>%s</tt:IPv4Address></tt:NTPManual>",
+                        s);
+            } else if (inet_pton(AF_INET6, s, &v6) == 1) {
+                snprintf(entry, sizeof(entry),
+                        "<tt:NTPManual><tt:Type>IPv6</tt:Type><tt:IPv6Address>%s</tt:IPv6Address></tt:NTPManual>",
+                        s);
+            } else {
+                snprintf(entry, sizeof(entry),
+                        "<tt:NTPManual><tt:Type>DNS</tt:Type><tt:DNSname>%s</tt:DNSname></tt:NTPManual>",
+                        s);
+            }
+            strncat(ntp_block, entry, sizeof(ntp_block) - strlen(ntp_block) - 1);
+        }
     }
 
     long size = cat(NULL, "device_service_files/GetNTP.xml", 2,
