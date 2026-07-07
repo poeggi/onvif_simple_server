@@ -395,6 +395,39 @@ int device_system_reboot()
     return ret;
 }
 
+int device_set_system_factory_default()
+{
+    const char *fd_type;
+    int ret;
+
+    /* Opt-in: without a configured command the operation is not supported. */
+    if ((service_ctx.factory_default_command == NULL) ||
+            (service_ctx.factory_default_command[0] == '\0')) {
+        return send_action_not_supported_fault("device_service");
+    }
+
+    /* FactoryDefault is "Hard" or "Soft" (default Hard). Pass it to the hook via
+     * an env var -- never interpolated into the shell command -- so the request
+     * cannot inject shell syntax. */
+    fd_type = get_element("FactoryDefault", "Body");
+    if ((fd_type != NULL) && (strcmp(fd_type, "Soft") == 0))
+        setenv("ONVIF_FACTORY_DEFAULT_TYPE", "Soft", 1);
+    else
+        setenv("ONVIF_FACTORY_DEFAULT_TYPE", "Hard", 1);
+
+    long size = cat(NULL, "device_service_files/SetSystemFactoryDefault.xml", 0);
+    output_http_headers(size);
+    ret = cat("stdout", "device_service_files/SetSystemFactoryDefault.xml", 0);
+    fflush(stdout);
+    sleep(1);
+
+    /* Fire-and-forget action (the command typically wipes config and reboots) --
+     * same "respond, then act" flow as device_system_reboot(). */
+    system(service_ctx.factory_default_command);
+
+    return ret;
+}
+
 int device_get_scopes()
 {
     int i;

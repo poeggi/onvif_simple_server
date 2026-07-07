@@ -474,6 +474,8 @@ int main(int argc, char ** argv)
                 device_get_system_date_and_time();
             } else if (strcasecmp(method, "SystemReboot") == 0) {
                 device_system_reboot();
+            } else if (strcasecmp(method, "SetSystemFactoryDefault") == 0) {
+                device_set_system_factory_default();
             } else if (strcasecmp(method, "GetScopes") == 0) {
                 device_get_scopes();
             } else if (strcasecmp(method, "GetUsers") == 0) {

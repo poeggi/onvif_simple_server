@@ -22,6 +22,7 @@ int device_get_service_capabilities();
 int device_get_device_information();
 int device_get_system_date_and_time();
 int device_system_reboot();
+int device_set_system_factory_default();
 int device_get_scopes();
 int device_get_users();
 int device_get_wsdl_url();

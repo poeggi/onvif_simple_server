@@ -57,6 +57,7 @@ int process_conf_file(char *file)
     service_ctx.serial_num = NULL;
     service_ctx.hardware_id = NULL;
     service_ctx.ifs = NULL;
+    service_ctx.factory_default_command = NULL;
     service_ctx.adv_enable_media2 = 0;
     service_ctx.adv_fault_if_unknown = 0;
     service_ctx.adv_fault_if_set = 0;
@@ -192,6 +193,9 @@ int process_conf_file(char *file)
         } else if (strcasecmp(param, "adv_synology_nvr") == 0) {
             if (strcasecmp(value, "1") == 0)
                 service_ctx.adv_synology_nvr = 1;
+        } else if (strcasecmp(param, "factory_default_command") == 0) {
+            service_ctx.factory_default_command = (char *) malloc(strlen(value) + 1);
+            strcpy(service_ctx.factory_default_command, value);
 
         //Media Profile for ONVIF Media Service
         } else if (strcasecmp(param, "name") == 0) {
@@ -790,6 +794,7 @@ int process_json_conf_file(char *file)
     service_ctx.serial_num = NULL;
     service_ctx.hardware_id = NULL;
     service_ctx.ifs = NULL;
+    service_ctx.factory_default_command = NULL;
     service_ctx.adv_enable_media2 = 0;
     service_ctx.adv_fault_if_unknown = 0;
     service_ctx.adv_fault_if_set = 0;
@@ -833,6 +838,7 @@ int process_json_conf_file(char *file)
     get_string_from_json(&(service_ctx.firmware_ver), json_file, "firmware_ver");
     get_string_from_json(&(service_ctx.hardware_id), json_file, "hardware_id");
     get_string_from_json(&(service_ctx.serial_num), json_file, "serial_num");
+    get_string_from_json(&(service_ctx.factory_default_command), json_file, "factory_default_command");
     get_string_from_json(&(service_ctx.ifs), json_file, "ifs");
     get_int_from_json(&(service_ctx.port), json_file, "port");
 
@@ -934,6 +940,7 @@ int process_json_conf_file(char *file)
     log_debug("hardware_id: %s", service_ctx.hardware_id);
     log_debug("serial_num: %s", service_ctx.serial_num);
     log_debug("ifs: %s", service_ctx.ifs);
+    log_debug("factory_default_command: %s", service_ctx.factory_default_command ? service_ctx.factory_default_command : "(none)");
     log_debug("port: %d", service_ctx.port);
     log_debug("scopes:");
     for (i = 0; i < service_ctx.scopes_num; i++) {
@@ -1299,6 +1306,7 @@ void free_conf_file()
     if (service_ctx.firmware_ver != NULL) free(service_ctx.firmware_ver);
     if (service_ctx.model != NULL) free(service_ctx.model);
     if (service_ctx.manufacturer != NULL) free(service_ctx.manufacturer);
+    if (service_ctx.factory_default_command != NULL) free(service_ctx.factory_default_command);
     if (service_ctx.password != NULL) free(service_ctx.password);
     if (service_ctx.user != NULL) free(service_ctx.user);
 }
@@ -1322,6 +1330,8 @@ void print_conf_help()
     fprintf(stderr, "\tadv_fault_if_unknown=0\n");
     fprintf(stderr, "\tadv_fault_if_set=0\n");
     fprintf(stderr, "\tadv_synology_nvr=0\n");
+    fprintf(stderr, "\t#Shell command run on SetSystemFactoryDefault (empty = operation not supported)\n");
+    fprintf(stderr, "\tfactory_default_command=\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "\t#Profile 0\n");
     fprintf(stderr, "\tname=Profile_0\n");
