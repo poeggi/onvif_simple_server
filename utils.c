@@ -1770,7 +1770,7 @@ static int is_valid_hostname_or_ip(const char *s)
  * Fork /bin/sh -c cmd, capture stdout, kill child after timeout_sec seconds.
  * Returns bytes captured (null-terminated in buf), or -1 on fork failure.
  */
-static ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout_sec)
+ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout_sec)
 {
     if (len == 0) return -1;
     int pipefd[2];

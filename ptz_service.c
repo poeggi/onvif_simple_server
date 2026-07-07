@@ -32,8 +32,7 @@ presets_t presets;
 
 int init_presets()
 {
-    FILE *fp;
-    char out[MAX_LEN];
+    char out[4096];
     int i, num;
     double x, y, z;
     char name[MAX_LEN];
@@ -46,36 +45,36 @@ int init_presets()
     if (service_ctx.ptz_node.get_presets == NULL) {
         return -1;
     }
-    fp = popen(service_ctx.ptz_node.get_presets, "r");
-    if (fp == NULL) {
+    // Capture the whole preset list at once (2s timeout guards against a hang),
+    // then parse it line by line.
+    if (spawn_capture(service_ctx.ptz_node.get_presets, out, sizeof(out), 2) <= 0) {
         return -2;
-    } else {
-        while (fgets(out, sizeof(out), fp)) {
-            p = out;
+    }
+    {
+        char *save = NULL;
+        char *line;
+        for (line = strtok_r(out, "\r\n", &save); line != NULL; line = strtok_r(NULL, "\r\n", &save)) {
+            p = line;
             name[0] = '\0';
             x = -1.0;
             y = -1.0;
             z = 1.0;
-            while((p = strchr(p, ',')) != NULL) {
+            while ((p = strchr(p, ',')) != NULL) {
                 *p++ = ' ';
             }
-            if (sscanf(out, "%d=%s %lf %lf %lf", &num, name, &x, &y, &z) == 0) {
-                pclose(fp);
+            if (sscanf(line, "%d=%s %lf %lf %lf", &num, name, &x, &y, &z) == 0) {
                 return -3;
-            } else {
-                if (strlen(name) != 0) {
-                    presets.count++;
-                    presets.items = (preset_t *) realloc(presets.items, sizeof(preset_t) * presets.count);
-                    presets.items[presets.count - 1].name = (char *) malloc(strlen(name) + 1);
-                    strcpy(presets.items[presets.count - 1].name, name);
-                    presets.items[presets.count - 1].number = num;
-                    presets.items[presets.count - 1].x = x;
-                    presets.items[presets.count - 1].y = y;
-                    presets.items[presets.count - 1].z = z;
-                }
+            } else if (strlen(name) != 0) {
+                presets.count++;
+                presets.items = (preset_t *) realloc(presets.items, sizeof(preset_t) * presets.count);
+                presets.items[presets.count - 1].name = (char *) malloc(strlen(name) + 1);
+                strcpy(presets.items[presets.count - 1].name, name);
+                presets.items[presets.count - 1].number = num;
+                presets.items[presets.count - 1].x = x;
+                presets.items[presets.count - 1].y = y;
+                presets.items[presets.count - 1].z = z;
             }
         }
-        pclose(fp);
     }
 
     for (i = 0; i < presets.count; i++) {
@@ -833,7 +832,6 @@ int ptz_get_status()
     time_t timestamp = time(NULL);
     struct tm *tm = gmtime(&timestamp);
     int ret = 0;
-    FILE *fp;
     double x, y, z = 1.0;
     int i = 0;
     char out[256], sx[128], sy[128], sz[128], si[128];
@@ -856,18 +854,10 @@ int ptz_get_status()
 
     // Run command that returns to stdout x and y position in the form x,y
     if (service_ctx.ptz_node.get_position != NULL) {
-        fp = popen(service_ctx.ptz_node.get_position, "r");
-        if (fp == NULL) {
-            ret = -3;
-        } else {
-            if (fgets(out, sizeof(out), fp) == NULL) {
-                ret = -4;
-            } else {
-                if (sscanf(out, "%lf,%lf,%lf", &x, &y, &z) < 2) {
-                    ret = -5;
-                }
-            }
-            pclose(fp);
+        if (spawn_capture(service_ctx.ptz_node.get_position, out, sizeof(out), 2) <= 0) {
+            ret = -4;
+        } else if (sscanf(out, "%lf,%lf,%lf", &x, &y, &z) < 2) {
+            ret = -5;
         }
     } else {
         // If the cam doesn't know the status, return a fault
@@ -876,18 +866,10 @@ int ptz_get_status()
 
     // Run command that returns to stdout if PTZ is moving (1) or not (0)
     if (service_ctx.ptz_node.is_moving != NULL) {
-        fp = popen(service_ctx.ptz_node.is_moving, "r");
-        if (fp == NULL) {
-            ret = -7;
-        } else {
-            if (fgets(out, sizeof(out), fp) == NULL) {
-                ret = -8;
-            } else {
-                if (sscanf(out, "%d", &i) < 1) {
-                    ret = -9;
-                }
-            }
-            pclose(fp);
+        if (spawn_capture(service_ctx.ptz_node.is_moving, out, sizeof(out), 2) <= 0) {
+            ret = -8;
+        } else if (sscanf(out, "%d", &i) < 1) {
+            ret = -9;
         }
     } else {
         // If the cam doesn't know the status, return IDLE

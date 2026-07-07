@@ -21,6 +21,7 @@
 #include <time.h>
 #include <stdint.h>
 #include <semaphore.h>
+#include <sys/types.h>
 
 #define MAX_LEN     1024
 #define MAX_CAT_LEN 2048
@@ -111,6 +112,9 @@ void gen_uuid_v5_mac(char *uuid_str, const uint8_t mac[6]);
 int get_from_query_string(char **ret, int *ret_size, char *par);
 int set_video_codec(char *buffer, int buffer_len, int codec, int ver);
 int set_audio_codec(char *buffer, int buffer_len, int codec, int ver);
+/* Fork /bin/sh -c cmd, capture stdout, SIGKILL the child after timeout_sec.
+ * Returns bytes captured (null-terminated in buf), or -1 on fork failure. */
+ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout_sec);
 /* Fill buf with all configured DNS/NTP servers, newline-separated.
  * Return the number of servers written (0 if none). */
 int get_dns_server(char *buf, size_t len);
