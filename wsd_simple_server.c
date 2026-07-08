@@ -60,11 +60,14 @@
 int debug;
 FILE *fLog;
 char template_file[1024];
-/* Single dual-stack socket (AF_INET6, IPV6_V6ONLY=0) */
+/* Service socket: dual-stack AF_INET6 (IPV6_V6ONLY=0) when an IPv6 address is
+ * present, else a plain AF_INET socket (IPv4-only, e.g. kernels without IPv6). */
 int sock;
+int sock_family;
 /* IPv4 */
 char address[16], netmask[16];
-struct sockaddr_in6 addr_mcast4; /* [::ffff:239.255.255.250]:3702 */
+struct sockaddr_storage addr_mcast4; /* IPv4 WSD mcast dest; family per sock_family */
+socklen_t addr_mcast4_len;
 char xaddr[1024];
 /* IPv6 (auto-detected at startup) */
 char address6[INET6_ADDRSTRLEN];
@@ -460,33 +463,57 @@ int main(int argc, char **argv)
         }
     }
 
-    /* ---- Single dual-stack UDP socket ------------------------------------- */
+    /* ---- Service socket: dual-stack AF_INET6, or AF_INET (IPv4-only) ------- */
+    /* Family follows the IPv6 detection result: dual-stack only when there is
+     * an IPv6 address to serve, else plain AF_INET -- so WSD still runs on
+     * kernels built without IPv6, where socket(AF_INET6) fails. */
     {
-        struct sockaddr_in6 bind6;
         int yes = 1;
+        sock_family = xaddr6[0] ? AF_INET6 : AF_INET;
 
-        if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-            log_fatal("Unable to create socket: %s", strerror(errno));
-            fclose(fLog); exit(EXIT_FAILURE);
+        if ((sock = socket(sock_family, SOCK_DGRAM, 0)) < 0) {
+            /* v6 detected but AF_INET6 unavailable: drop to IPv4-only. */
+            if (sock_family == AF_INET6) {
+                log_warn("AF_INET6 socket unavailable (%s); falling back to IPv4-only.", strerror(errno));
+                sock_family = AF_INET;
+                xaddr6[0] = '\0';
+                sock = socket(AF_INET, SOCK_DGRAM, 0);
+            }
+            if (sock < 0) {
+                log_fatal("Unable to create socket: %s", strerror(errno));
+                fclose(fLog); exit(EXIT_FAILURE);
+            }
         }
-        /* IPV6_V6ONLY = 0: dual-stack -- :::3702 receives both IPv4 (as ::ffff:x.x.x.x)
-         * and IPv6.  Explicitly set to override net.ipv6.bindv6only on any platform. */
-        setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no));
+
+        /* IPV6_V6ONLY=0: the dual-stack socket also receives IPv4 (::ffff:x.x.x.x). */
+        if (sock_family == AF_INET6)
+            setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &no, sizeof(no));
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
 
-        memset(&bind6, 0, sizeof(bind6));
-        bind6.sin6_family = AF_INET6; bind6.sin6_port = htons(PORT);
-        bind6.sin6_addr = in6addr_any;
-        if (bind(sock, (struct sockaddr *)&bind6, sizeof(bind6)) < 0) {
-            log_fatal("Unable to bind socket: %s", strerror(errno));
-            close(sock); fclose(fLog); exit(EXIT_FAILURE);
+        if (sock_family == AF_INET6) {
+            struct sockaddr_in6 bind6;
+            memset(&bind6, 0, sizeof(bind6));
+            bind6.sin6_family = AF_INET6; bind6.sin6_port = htons(PORT);
+            bind6.sin6_addr = in6addr_any;
+            if (bind(sock, (struct sockaddr *)&bind6, sizeof(bind6)) < 0) {
+                log_fatal("Unable to bind socket: %s", strerror(errno));
+                close(sock); fclose(fLog); exit(EXIT_FAILURE);
+            }
+        } else {
+            struct sockaddr_in bind4;
+            memset(&bind4, 0, sizeof(bind4));
+            bind4.sin_family = AF_INET; bind4.sin_port = htons(PORT);
+            bind4.sin_addr.s_addr = INADDR_ANY;
+            if (bind(sock, (struct sockaddr *)&bind4, sizeof(bind4)) < 0) {
+                log_fatal("Unable to bind socket: %s", strerror(errno));
+                close(sock); fclose(fLog); exit(EXIT_FAILURE);
+            }
         }
 
-        /* Join IPv4 WSD multicast group via IPPROTO_IP on the dual-stack socket.
-         * IPV6_V6ONLY=0 causes Linux to route IPPROTO_IP options to the IPv4
-         * path, so IP_ADD_MEMBERSHIP works on AF_INET6 dual-stack sockets.
-         * MCAST_JOIN_GROUP with IPPROTO_IPV6 does not work here because the
-         * kernel's IPv6 mc path rejects AF_INET addresses in gr_group. */
+        /* Join the IPv4 WSD multicast group. IP_ADD_MEMBERSHIP with ip_mreq
+         * works on a plain AF_INET socket and, via IPV6_V6ONLY=0, on the
+         * dual-stack AF_INET6 socket too (MCAST_JOIN_GROUP with IPPROTO_IPV6
+         * does not, because the kernel IPv6 mc path rejects AF_INET groups). */
         if (have_v4) {
             struct ip_mreq mreq4;
             memset(&mreq4, 0, sizeof(mreq4));
@@ -498,10 +525,19 @@ int main(int argc, char **argv)
             }
         }
 
-        /* IPv4 multicast destination as IPv4-mapped IPv6 address */
+        /* IPv4 mcast destination: IPv4-mapped on the dual-stack socket, real IPv4 on AF_INET. */
         memset(&addr_mcast4, 0, sizeof(addr_mcast4));
-        addr_mcast4.sin6_family = AF_INET6; addr_mcast4.sin6_port = htons(PORT);
-        inet_pton(AF_INET6, "::ffff:" MULTICAST_ADDRESS, &addr_mcast4.sin6_addr);
+        if (sock_family == AF_INET6) {
+            struct sockaddr_in6 *m = (struct sockaddr_in6 *)&addr_mcast4;
+            m->sin6_family = AF_INET6; m->sin6_port = htons(PORT);
+            inet_pton(AF_INET6, "::ffff:" MULTICAST_ADDRESS, &m->sin6_addr);
+            addr_mcast4_len = sizeof(struct sockaddr_in6);
+        } else {
+            struct sockaddr_in *m = (struct sockaddr_in *)&addr_mcast4;
+            m->sin_family = AF_INET; m->sin_port = htons(PORT);
+            m->sin_addr.s_addr = inet_addr(MULTICAST_ADDRESS);
+            addr_mcast4_len = sizeof(struct sockaddr_in);
+        }
     }
 
     /* ---- IPv6 multicast (when IPv6 address was detected) ----------------- */
@@ -547,7 +583,7 @@ int main(int argc, char **argv)
             "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
             "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr);
         if (send_wsd_msg(sock, message, strlen(message),
-                         (struct sockaddr *)&addr_mcast4, sizeof(addr_mcast4)) < 0) {
+                         (struct sockaddr *)&addr_mcast4, addr_mcast4_len) < 0) {
             log_fatal("Error sending Hello (IPv4).");
             free(message); close(sock); fclose(fLog); exit(EXIT_FAILURE);
         }
@@ -589,9 +625,10 @@ int main(int argc, char **argv)
     exit_main = 0;
 
     while (!exit_main) {
-        struct sockaddr_in6 sender;
+        struct sockaddr_storage sender;
         socklen_t slen = sizeof(sender);
         const char *probe_xaddr;
+        int is_v4;
         fd_set rfds;
         FD_ZERO(&rfds);
         FD_SET(sock, &rfds);
@@ -601,7 +638,11 @@ int main(int argc, char **argv)
         if (recvfrom(sock, recv_buffer, RECV_BUFFER_LEN, 0,
                      (struct sockaddr *)&sender, &slen) <= 0) continue;
 
-        if (IN6_IS_ADDR_V4MAPPED(&sender.sin6_addr)) {
+        /* Native IPv4 (AF_INET socket) or IPv4-mapped IPv6 (dual-stack socket). */
+        is_v4 = (sender.ss_family == AF_INET) ||
+                ((sender.ss_family == AF_INET6) &&
+                 IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&sender)->sin6_addr));
+        if (is_v4) {
             if (!have_v4) { log_debug("IPv4 probe received but IPv4 WSD not active; ignoring."); continue; }
             probe_xaddr = xaddr;
         } else if (xaddr6[0]) {
