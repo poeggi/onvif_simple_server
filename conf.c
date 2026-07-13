@@ -154,33 +154,33 @@ int process_conf_file(char *file)
             }
         } else if (strcasecmp(param, "user") == 0) {
             service_ctx.user = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.user, value);
+            snprintf(service_ctx.user, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "password") == 0) {
             service_ctx.password = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.password, value);
+            snprintf(service_ctx.password, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "manufacturer") == 0) {
             service_ctx.manufacturer = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.manufacturer, value);
+            snprintf(service_ctx.manufacturer, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "model") == 0) {
             service_ctx.model = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.model, value);
+            snprintf(service_ctx.model, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "firmware_ver") == 0) {
             service_ctx.firmware_ver= (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.firmware_ver, value);
+            snprintf(service_ctx.firmware_ver, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "serial_num") == 0) {
             service_ctx.serial_num = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.serial_num, value);
+            snprintf(service_ctx.serial_num, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "hardware_id") == 0) {
             service_ctx.hardware_id = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.hardware_id, value);
+            snprintf(service_ctx.hardware_id, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "scope") == 0) {
             service_ctx.scopes_num++;
             service_ctx.scopes = (char **) realloc(service_ctx.scopes, service_ctx.scopes_num * sizeof(char *));
             service_ctx.scopes[service_ctx.scopes_num - 1] = (char *) malloc((strlen(value) + 1) * sizeof(char));
-            strcpy(service_ctx.scopes[service_ctx.scopes_num - 1], value);
+            snprintf(service_ctx.scopes[service_ctx.scopes_num - 1], strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "ifs") == 0) {
             service_ctx.ifs = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.ifs, value);
+            snprintf(service_ctx.ifs, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "adv_enable_media2") == 0) {
             if (strcasecmp(value, "1") == 0)
                 service_ctx.adv_enable_media2 = 1;
@@ -195,7 +195,7 @@ int process_conf_file(char *file)
                 service_ctx.adv_synology_nvr = 1;
         } else if (strcasecmp(param, "factory_default_command") == 0) {
             service_ctx.factory_default_command = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.factory_default_command, value);
+            snprintf(service_ctx.factory_default_command, strlen(value) + 1, "%s", value);
 
         //Media Profile for ONVIF Media Service
         } else if (strcasecmp(param, "name") == 0) {
@@ -215,7 +215,7 @@ int process_conf_file(char *file)
                 }
             }
             service_ctx.profiles[service_ctx.profiles_num - 1].name = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.profiles[service_ctx.profiles_num - 1].name, value);
+            snprintf(service_ctx.profiles[service_ctx.profiles_num - 1].name, strlen(value) + 1, "%s", value);
             service_ctx.profiles[service_ctx.profiles_num - 1].width = 0;
             service_ctx.profiles[service_ctx.profiles_num - 1].height = 0;
             service_ctx.profiles[service_ctx.profiles_num - 1].url = NULL;
@@ -253,10 +253,10 @@ int process_conf_file(char *file)
             }
         } else if (strcasecmp(param, "url") == 0) {
             service_ctx.profiles[service_ctx.profiles_num - 1].url = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.profiles[service_ctx.profiles_num - 1].url, value);
+            snprintf(service_ctx.profiles[service_ctx.profiles_num - 1].url, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "snapurl") == 0) {
             service_ctx.profiles[service_ctx.profiles_num - 1].snapurl = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.profiles[service_ctx.profiles_num - 1].snapurl, value);
+            snprintf(service_ctx.profiles[service_ctx.profiles_num - 1].snapurl, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "type") == 0) {
             if (strcasecmp(value, "JPEG") == 0)
                 service_ctx.profiles[service_ctx.profiles_num - 1].type = JPEG;
@@ -433,87 +433,87 @@ int process_conf_file(char *file)
         } else if (strcasecmp(param, "get_position") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.get_position = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.get_position, value);
+                snprintf(service_ctx.ptz_node.get_position, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "is_moving") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.is_moving = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.is_moving, value);
+                snprintf(service_ctx.ptz_node.is_moving, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_left") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_left = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_left, value);
+                snprintf(service_ctx.ptz_node.move_left, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_right") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_right = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_right, value);
+                snprintf(service_ctx.ptz_node.move_right, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_up") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_up = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_up, value);
+                snprintf(service_ctx.ptz_node.move_up, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_down") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_down = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_down, value);
+                snprintf(service_ctx.ptz_node.move_down, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_in") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_in = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_in, value);
+                snprintf(service_ctx.ptz_node.move_in, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_out") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_out = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_out, value);
+                snprintf(service_ctx.ptz_node.move_out, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_stop") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_stop = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_stop, value);
+                snprintf(service_ctx.ptz_node.move_stop, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "move_preset") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.move_preset = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.move_preset, value);
+                snprintf(service_ctx.ptz_node.move_preset, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "goto_home_position") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.goto_home_position = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.goto_home_position, value);
+                snprintf(service_ctx.ptz_node.goto_home_position, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "set_preset") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.set_preset = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.set_preset, value);
+                snprintf(service_ctx.ptz_node.set_preset, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "set_home_position") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.set_home_position = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.set_home_position, value);
+                snprintf(service_ctx.ptz_node.set_home_position, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "remove_preset") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.remove_preset = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.remove_preset, value);
+                snprintf(service_ctx.ptz_node.remove_preset, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "jump_to_abs") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.jump_to_abs = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.jump_to_abs, value);
+                snprintf(service_ctx.ptz_node.jump_to_abs, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "jump_to_rel") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.jump_to_rel = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.jump_to_rel, value);
+                snprintf(service_ctx.ptz_node.jump_to_rel, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "get_presets") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 service_ctx.ptz_node.get_presets = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.ptz_node.get_presets, value);
+                snprintf(service_ctx.ptz_node.get_presets, strlen(value) + 1, "%s", value);
             }
 
         //Relay outputs
@@ -533,10 +533,10 @@ int process_conf_file(char *file)
             service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].open = NULL;
         } else if (strcasecmp(param, "close") == 0) {
             service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].close = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].close, value);
+            snprintf(service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].close, strlen(value) + 1, "%s", value);
         } else if (strcasecmp(param, "open") == 0) {
             service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].open = (char *) malloc(strlen(value) + 1);
-            strcpy(service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].open, value);
+            snprintf(service_ctx.relay_outputs[service_ctx.relay_outputs_num - 1].open, strlen(value) + 1, "%s", value);
 
         //Events Profile for ONVIF Events Service
         } else if (strcasecmp(param, "events") == 0) {
@@ -561,27 +561,27 @@ int process_conf_file(char *file)
                 service_ctx.events[service_ctx.events_num - 1].source_value = NULL;
                 service_ctx.events[service_ctx.events_num - 1].input_file = NULL;
                 service_ctx.events[service_ctx.events_num - 1].topic = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.events[service_ctx.events_num - 1].topic, value);
+                snprintf(service_ctx.events[service_ctx.events_num - 1].topic, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "source_name") == 0) {
             if (service_ctx.events_enable != EVENTS_NONE) {
                 service_ctx.events[service_ctx.events_num - 1].source_name = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.events[service_ctx.events_num - 1].source_name, value);
+                snprintf(service_ctx.events[service_ctx.events_num - 1].source_name, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "source_type") == 0) {
             if (service_ctx.events_enable != EVENTS_NONE) {
                 service_ctx.events[service_ctx.events_num - 1].source_type = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.events[service_ctx.events_num - 1].source_type, value);
+                snprintf(service_ctx.events[service_ctx.events_num - 1].source_type, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "source_value") == 0) {
             if (service_ctx.events_enable != EVENTS_NONE) {
                 service_ctx.events[service_ctx.events_num - 1].source_value = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.events[service_ctx.events_num - 1].source_value, value);
+                snprintf(service_ctx.events[service_ctx.events_num - 1].source_value, strlen(value) + 1, "%s", value);
             }
         } else if (strcasecmp(param, "input_file") == 0) {
             if (service_ctx.events_enable != EVENTS_NONE) {
                 service_ctx.events[service_ctx.events_num - 1].input_file = (char *) malloc(strlen(value) + 1);
-                strcpy(service_ctx.events[service_ctx.events_num - 1].input_file, value);
+                snprintf(service_ctx.events[service_ctx.events_num - 1].input_file, strlen(value) + 1, "%s", value);
             }
         } else {
             log_warn("Unrecognized option: %s", line);
@@ -600,21 +600,21 @@ int process_conf_file(char *file)
             log_debug("Adding event for relay output %d", i);
             service_ctx.events = (event_t *) realloc(service_ctx.events, service_ctx.events_num * sizeof(event_t));
             service_ctx.events[service_ctx.events_num - 1].topic = (char *) malloc(strlen("tns1:Device/Trigger/Relay") + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].topic, "tns1:Device/Trigger/Relay");
+            snprintf(service_ctx.events[service_ctx.events_num - 1].topic, strlen("tns1:Device/Trigger/Relay") + 1, "%s", "tns1:Device/Trigger/Relay");
             log_debug("topic: tns1:Device/Trigger/Relay");
             service_ctx.events[service_ctx.events_num - 1].source_name = (char *) malloc(strlen("RelayToken") + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].source_name, "RelayToken");
+            snprintf(service_ctx.events[service_ctx.events_num - 1].source_name, strlen("RelayToken") + 1, "%s", "RelayToken");
             log_debug("source_name: RelayToken");
             service_ctx.events[service_ctx.events_num - 1].source_type = (char *) malloc(strlen("tt:ReferenceToken") + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].source_type, "tt:ReferenceToken");
+            snprintf(service_ctx.events[service_ctx.events_num - 1].source_type, strlen("tt:ReferenceToken") + 1, "%s", "tt:ReferenceToken");
             log_debug("source_type: tt:ReferenceToken");
-            sprintf(stmp, "RelayOutputToken_%d", i);
+            snprintf(stmp, sizeof(stmp), "RelayOutputToken_%d", i);
             service_ctx.events[service_ctx.events_num - 1].source_value = (char *) malloc(strlen(stmp) + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].source_value, stmp);
+            snprintf(service_ctx.events[service_ctx.events_num - 1].source_value, strlen(stmp) + 1, "%s", stmp);
             log_debug("source_value: %s", stmp);
-            sprintf(stmp, "/tmp/onvif_notify_server/relay_output_%d", i);
+            snprintf(stmp, sizeof(stmp), "/tmp/onvif_notify_server/relay_output_%d", i);
             service_ctx.events[service_ctx.events_num - 1].input_file = (char *) malloc(strlen(stmp) + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].input_file, stmp);
+            snprintf(service_ctx.events[service_ctx.events_num - 1].input_file, strlen(stmp) + 1, "%s", stmp);
             log_debug("input_file: %s", stmp);
         }
     }
@@ -622,23 +622,23 @@ int process_conf_file(char *file)
     // If a string option is NULL, set a default value
     if (service_ctx.manufacturer == NULL) {
         service_ctx.manufacturer = (char *) malloc(strlen(DEFAULT_MANUFACTURER) + 1);
-        strcpy(service_ctx.manufacturer, DEFAULT_MANUFACTURER);
+        snprintf(service_ctx.manufacturer, strlen(DEFAULT_MANUFACTURER) + 1, "%s", DEFAULT_MANUFACTURER);
     }
     if (service_ctx.model == NULL) {
         service_ctx.model = (char *) malloc(strlen(DEFAULT_MODEL) + 1);
-        strcpy(service_ctx.model, DEFAULT_MODEL);
+        snprintf(service_ctx.model, strlen(DEFAULT_MODEL) + 1, "%s", DEFAULT_MODEL);
     }
     if (service_ctx.firmware_ver == NULL) {
         service_ctx.firmware_ver = (char *) malloc(strlen(DEFAULT_FW_VER) + 1);
-        strcpy(service_ctx.firmware_ver, DEFAULT_FW_VER);
+        snprintf(service_ctx.firmware_ver, strlen(DEFAULT_FW_VER) + 1, "%s", DEFAULT_FW_VER);
     }
     if (service_ctx.serial_num == NULL) {
         service_ctx.serial_num = (char *) malloc(strlen(DEFAULT_SERIAL_NUM) + 1);
-        strcpy(service_ctx.serial_num, DEFAULT_SERIAL_NUM);
+        snprintf(service_ctx.serial_num, strlen(DEFAULT_SERIAL_NUM) + 1, "%s", DEFAULT_SERIAL_NUM);
     }
     if (service_ctx.hardware_id == NULL) {
         service_ctx.hardware_id = (char *) malloc(strlen(DEFAULT_HW_ID) + 1);
-        strcpy(service_ctx.hardware_id, DEFAULT_HW_ID);
+        snprintf(service_ctx.hardware_id, strlen(DEFAULT_HW_ID) + 1, "%s", DEFAULT_HW_ID);
     }
     /* Address and interface resolution */
     if (service_ctx.ifs != NULL) {
@@ -659,10 +659,10 @@ int process_conf_file(char *file)
         char auto_ifs[IFNAMSIZ];
         if (get_ifname_by_addr(service_ctx.address, auto_ifs, sizeof(auto_ifs)) == 0) {
             service_ctx.ifs = (char *) malloc(strlen(auto_ifs) + 1);
-            strcpy(service_ctx.ifs, auto_ifs);
+            snprintf(service_ctx.ifs, strlen(auto_ifs) + 1, "%s", auto_ifs);
         } else {
             service_ctx.ifs = (char *) malloc(strlen(DEFAULT_IFS) + 1);
-            strcpy(service_ctx.ifs, DEFAULT_IFS);
+            snprintf(service_ctx.ifs, strlen(DEFAULT_IFS) + 1, "%s", DEFAULT_IFS);
         }
     }
     if (strchr(service_ctx.address, ':'))
@@ -696,7 +696,7 @@ void get_string_from_json(char** var, json_object* j, char* name)
             const char* str_val = json_object_get_string(s);
             if (str_val != NULL) {
                 *var = (char*) malloc((strlen(str_val) + 1) * sizeof(char));
-                strcpy(*var, str_val);
+                snprintf(*var, strlen(str_val) + 1, "%s", str_val);
             }
         }
     }
@@ -852,7 +852,7 @@ int process_json_conf_file(char *file)
                     service_ctx.scopes = (char**) realloc(service_ctx.scopes, service_ctx.scopes_num * sizeof(char*));
                     const char* str_val = json_object_get_string(item);
                     service_ctx.scopes[service_ctx.scopes_num - 1] = (char*) malloc((strlen(str_val) + 1) * sizeof(char));
-                    strcpy(service_ctx.scopes[service_ctx.scopes_num - 1], str_val);
+                    snprintf(service_ctx.scopes[service_ctx.scopes_num - 1], strlen(str_val) + 1, "%s", str_val);
                 }
             }
         }
@@ -868,27 +868,27 @@ int process_json_conf_file(char *file)
     if (service_ctx.manufacturer == NULL) {
         service_ctx.manufacturer = (char*) malloc(strlen(DEFAULT_MANUFACTURER) + 1);
         if (service_ctx.manufacturer)
-            strcpy(service_ctx.manufacturer, DEFAULT_MANUFACTURER);
+            snprintf(service_ctx.manufacturer, strlen(DEFAULT_MANUFACTURER) + 1, "%s", DEFAULT_MANUFACTURER);
     }
     if (service_ctx.model == NULL) {
         service_ctx.model = (char*) malloc(strlen(DEFAULT_MODEL) + 1);
         if (service_ctx.model)
-            strcpy(service_ctx.model, DEFAULT_MODEL);
+            snprintf(service_ctx.model, strlen(DEFAULT_MODEL) + 1, "%s", DEFAULT_MODEL);
     }
     if (service_ctx.firmware_ver == NULL) {
         service_ctx.firmware_ver = (char*) malloc(strlen(DEFAULT_FW_VER) + 1);
         if (service_ctx.firmware_ver)
-            strcpy(service_ctx.firmware_ver, DEFAULT_FW_VER);
+            snprintf(service_ctx.firmware_ver, strlen(DEFAULT_FW_VER) + 1, "%s", DEFAULT_FW_VER);
     }
     if (service_ctx.serial_num == NULL) {
         service_ctx.serial_num = (char*) malloc(strlen(DEFAULT_SERIAL_NUM) + 1);
         if (service_ctx.serial_num)
-            strcpy(service_ctx.serial_num, DEFAULT_SERIAL_NUM);
+            snprintf(service_ctx.serial_num, strlen(DEFAULT_SERIAL_NUM) + 1, "%s", DEFAULT_SERIAL_NUM);
     }
     if (service_ctx.hardware_id == NULL) {
         service_ctx.hardware_id = (char*) malloc(strlen(DEFAULT_HW_ID) + 1);
         if (service_ctx.hardware_id)
-            strcpy(service_ctx.hardware_id, DEFAULT_HW_ID);
+            snprintf(service_ctx.hardware_id, strlen(DEFAULT_HW_ID) + 1, "%s", DEFAULT_HW_ID);
     }
     /* Address and interface resolution */
     if (service_ctx.ifs != NULL) {
@@ -909,10 +909,10 @@ int process_json_conf_file(char *file)
         char auto_ifs[IFNAMSIZ];
         if (get_ifname_by_addr(service_ctx.address, auto_ifs, sizeof(auto_ifs)) == 0) {
             service_ctx.ifs = (char*) malloc(strlen(auto_ifs) + 1);
-            if (service_ctx.ifs) strcpy(service_ctx.ifs, auto_ifs);
+            if (service_ctx.ifs) snprintf(service_ctx.ifs, strlen(auto_ifs) + 1, "%s", auto_ifs);
         } else {
             service_ctx.ifs = (char*) malloc(strlen(DEFAULT_IFS) + 1);
-            if (service_ctx.ifs) strcpy(service_ctx.ifs, DEFAULT_IFS);
+            if (service_ctx.ifs) snprintf(service_ctx.ifs, strlen(DEFAULT_IFS) + 1, "%s", DEFAULT_IFS);
         }
     }
     if (strchr(service_ctx.address, ':'))
@@ -1223,21 +1223,21 @@ int process_json_conf_file(char *file)
             log_debug("Adding event for relay output %d", i);
             service_ctx.events = (event_t *) realloc(service_ctx.events, service_ctx.events_num * sizeof(event_t));
             service_ctx.events[service_ctx.events_num - 1].topic = (char *) malloc(strlen("tns1:Device/Trigger/Relay") + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].topic, "tns1:Device/Trigger/Relay");
+            snprintf(service_ctx.events[service_ctx.events_num - 1].topic, strlen("tns1:Device/Trigger/Relay") + 1, "%s", "tns1:Device/Trigger/Relay");
             log_debug("topic: tns1:Device/Trigger/Relay");
             service_ctx.events[service_ctx.events_num - 1].source_name = (char *) malloc(strlen("RelayToken") + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].source_name, "RelayToken");
+            snprintf(service_ctx.events[service_ctx.events_num - 1].source_name, strlen("RelayToken") + 1, "%s", "RelayToken");
             log_debug("source_name: RelayToken");
             service_ctx.events[service_ctx.events_num - 1].source_type = (char *) malloc(strlen("tt:ReferenceToken") + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].source_type, "tt:ReferenceToken");
+            snprintf(service_ctx.events[service_ctx.events_num - 1].source_type, strlen("tt:ReferenceToken") + 1, "%s", "tt:ReferenceToken");
             log_debug("source_type: tt:ReferenceToken");
-            sprintf(stmp, "RelayOutputToken_%d", i);
+            snprintf(stmp, sizeof(stmp), "RelayOutputToken_%d", i);
             service_ctx.events[service_ctx.events_num - 1].source_value = (char *) malloc(strlen(stmp) + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].source_value, stmp);
+            snprintf(service_ctx.events[service_ctx.events_num - 1].source_value, strlen(stmp) + 1, "%s", stmp);
             log_debug("source_value: %s", stmp);
-            sprintf(stmp, "/tmp/onvif_notify_server/relay_output_%d", i);
+            snprintf(stmp, sizeof(stmp), "/tmp/onvif_notify_server/relay_output_%d", i);
             service_ctx.events[service_ctx.events_num - 1].input_file = (char *) malloc(strlen(stmp) + 1);
-            strcpy(service_ctx.events[service_ctx.events_num - 1].input_file, stmp);
+            snprintf(service_ctx.events[service_ctx.events_num - 1].input_file, strlen(stmp) + 1, "%s", stmp);
             log_debug("input_file: %s", stmp);
         }
     }

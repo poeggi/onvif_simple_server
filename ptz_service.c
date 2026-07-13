@@ -62,13 +62,15 @@ int init_presets()
             while ((p = strchr(p, ',')) != NULL) {
                 *p++ = ' ';
             }
-            if (sscanf(line, "%d=%s %lf %lf %lf", &num, name, &x, &y, &z) == 0) {
+            /* "%1023s" bounds the name field to MAX_LEN-1 (MAX_LEN is 1024) so it
+             * cannot overflow name[MAX_LEN]. */
+            if (sscanf(line, "%d=%1023s %lf %lf %lf", &num, name, &x, &y, &z) == 0) {
                 return -3;
             } else if (strlen(name) != 0) {
                 presets.count++;
                 presets.items = (preset_t *) realloc(presets.items, sizeof(preset_t) * presets.count);
                 presets.items[presets.count - 1].name = (char *) malloc(strlen(name) + 1);
-                strcpy(presets.items[presets.count - 1].name, name);
+                snprintf(presets.items[presets.count - 1].name, strlen(name) + 1, "%s", name);
                 presets.items[presets.count - 1].number = num;
                 presets.items[presets.count - 1].x = x;
                 presets.items[presets.count - 1].y = y;
@@ -102,14 +104,14 @@ int ptz_get_service_capabilities()
     char move_status[8], status_position[8];
 
     if (service_ctx.ptz_node.is_moving != NULL) {
-        strcpy(move_status, "true");
+        snprintf(move_status, sizeof(move_status), "%s", "true");
     } else {
-        strcpy(move_status, "false");
+        snprintf(move_status, sizeof(move_status), "%s", "false");
     }
     if (service_ctx.ptz_node.get_position != NULL) {
-        strcpy(status_position, "true");
+        snprintf(status_position, sizeof(status_position), "%s", "true");
     } else {
-        strcpy(status_position, "false");
+        snprintf(status_position, sizeof(status_position), "%s", "false");
     }
 
     long size = cat(NULL, "ptz_service_files/GetServiceCapabilities.xml", 4,
@@ -132,12 +134,12 @@ int ptz_get_configurations()
     char min_z[256];
     char max_z[256];
 
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     long size = cat(NULL, "ptz_service_files/GetConfigurations.xml", 12,
             "%MIN_X%", min_x,
@@ -167,12 +169,12 @@ int ptz_get_configuration()
     char min_z[256];
     char max_z[256];
 
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     long size = cat(NULL, "ptz_service_files/GetConfiguration.xml", 12,
             "%MIN_X%", min_x,
@@ -202,12 +204,12 @@ int ptz_get_configuration_options()
     char min_z[256];
     char max_z[256];
 
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     long size = cat(NULL, "ptz_service_files/GetConfigurationOptions.xml", 12,
             "%MIN_X%", min_x,
@@ -237,12 +239,12 @@ int ptz_get_nodes()
     char min_z[256];
     char max_z[256];
 
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     long size = cat(NULL, "ptz_service_files/GetNodes.xml", 12,
             "%MIN_X%", min_x,
@@ -272,12 +274,12 @@ int ptz_get_node()
     char min_z[256];
     char max_z[256];
 
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     const char *node_token = get_element("NodeToken", "Body");
     if (strcmp("PTZNodeToken", node_token) != 0) {
@@ -340,10 +342,10 @@ int ptz_get_presets()
         if (c == 0) total_size = size;
 
         for (i = 0; i < presets.count; i++) {
-            sprintf(token, "PresetToken_%d", presets.items[i].number);
-            sprintf(sx, "%.1f", presets.items[i].x);
-            sprintf(sy, "%.1f", presets.items[i].y);
-            sprintf(sz, "%.1f", presets.items[i].z);
+            snprintf(token, sizeof(token), "PresetToken_%d", presets.items[i].number);
+            snprintf(sx, sizeof(sx), "%.1f", presets.items[i].x);
+            snprintf(sy, sizeof(sy), "%.1f", presets.items[i].y);
+            snprintf(sz, sizeof(sz), "%.1f", presets.items[i].z);
             size = cat(dest, "ptz_service_files/GetPresets_2.xml", 10,
                 "%TOKEN%", token,
                 "%NAME%", presets.items[i].name,
@@ -406,7 +408,7 @@ int ptz_goto_preset()
         return -5;
     }
 
-    sprintf(sys_command, service_ctx.ptz_node.move_preset, preset_number);
+    snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_preset, preset_number);
     system(sys_command);
     long size = cat(NULL, "ptz_service_files/GotoPreset.xml", 0);
 
@@ -485,7 +487,7 @@ int ptz_continuous_move()
                 send_action_failed_fault("ptz_service", -3);
                 return -3;
             }
-            sprintf(sys_command, service_ctx.ptz_node.move_right, dx);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_right, dx);
             system(sys_command);
             ret = 0;
         } else if (dx < 0.0) {
@@ -493,7 +495,7 @@ int ptz_continuous_move()
                 send_action_failed_fault("ptz_service", -4);
                 return -4;
             }
-            sprintf(sys_command, service_ctx.ptz_node.move_left, -dx);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_left, -dx);
             system(sys_command);
             ret = 0;
         }
@@ -507,7 +509,7 @@ int ptz_continuous_move()
                 send_action_failed_fault("ptz_service", -5);
                 return -5;
             }
-            sprintf(sys_command, service_ctx.ptz_node.move_up, dy);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_up, dy);
             system(sys_command);
             ret = 0;
         } else if (dy < 0.0) {
@@ -515,7 +517,7 @@ int ptz_continuous_move()
                 send_action_failed_fault("ptz_service", -6);
                 return -6;
             }
-            sprintf(sys_command, service_ctx.ptz_node.move_down, -dy);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_down, -dy);
             system(sys_command);
             ret = 0;
         }
@@ -529,7 +531,7 @@ int ptz_continuous_move()
                 send_action_failed_fault("ptz_service", -7);
                 return -7;
             }
-            sprintf(sys_command, service_ctx.ptz_node.move_in, dz);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_in, dz);
             system(sys_command);
             ret = 0;
         } else if (dz < 0.0) {
@@ -537,7 +539,7 @@ int ptz_continuous_move()
                 send_action_failed_fault("ptz_service", -8);
                 return -8;
             }
-            sprintf(sys_command, service_ctx.ptz_node.move_out, -dz);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_out, -dz);
             system(sys_command);
             ret = 0;
         }
@@ -626,7 +628,7 @@ int ptz_relative_move()
                             ret = -7;
                         }
                     }
-                    sprintf(sys_command, service_ctx.ptz_node.jump_to_rel, dx, dy, dz);
+                    snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.jump_to_rel, dx, dy, dz);
                 }
             }
         } else if (strcmp("http://www.onvif.org/ver10/tptz/PanTiltSpaces/TranslationSpaceFov", space_p) == 0) {
@@ -661,7 +663,7 @@ int ptz_relative_move()
                     // Approximation 4: I don't know how many degrees is max_step_y, assume 180°
                     dx = dx / (360.0 / service_ctx.ptz_node.max_step_x);
                     dy = dy / (180.0 / service_ctx.ptz_node.max_step_y);
-                    sprintf(sys_command, service_ctx.ptz_node.jump_to_rel, dx, dy, 0);
+                    snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.jump_to_rel, dx, dy, 0);
                 }
             }
         }
@@ -757,7 +759,7 @@ int ptz_absolute_move()
                     ret = -7;
                 }
             }
-            sprintf(sys_command, service_ctx.ptz_node.jump_to_abs, dx, dy, dz);
+            snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.jump_to_abs, dx, dy, dz);
         }
     }
 
@@ -809,13 +811,13 @@ int ptz_stop()
     }
 
     if (pantilt && zoom) {
-        sprintf(sys_command, service_ctx.ptz_node.move_stop, "all");
+        snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_stop, "all");
         system(sys_command);
     } else if (pantilt) {
-        sprintf(sys_command, service_ctx.ptz_node.move_stop, "pantilt");
+        snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_stop, "pantilt");
         system(sys_command);
     } else if (zoom) {
-        sprintf(sys_command, service_ctx.ptz_node.move_stop, "zoom");
+        snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.move_stop, "zoom");
         system(sys_command);
     }
 
@@ -848,7 +850,7 @@ int ptz_get_status()
         return -2;
     }
 
-    sprintf(utctime, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+    snprintf(utctime, sizeof(utctime), "%04d-%02d-%02dT%02d:%02d:%02dZ",
             tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
             tm->tm_hour, tm->tm_min, tm->tm_sec);
 
@@ -877,13 +879,13 @@ int ptz_get_status()
     }
 
     if (ret == 0) {
-        sprintf(sx, "%f", x);
-        sprintf(sy, "%f", y);
-        sprintf(sz, "%f", z);
+        snprintf(sx, sizeof(sx), "%f", x);
+        snprintf(sy, sizeof(sy), "%f", y);
+        snprintf(sz, sizeof(sz), "%f", z);
         if (i == 1)
-            strcpy(si, "MOVING");
+            snprintf(si, sizeof(si), "%s", "MOVING");
         else
-            strcpy(si, "IDLE");
+            snprintf(si, sizeof(si), "%s", "IDLE");
 
         long size = cat(NULL, "ptz_service_files/GetStatus.xml", 12,
                 "%X%", sx,
@@ -1020,7 +1022,7 @@ int ptz_set_preset()
                 return -7;
             }
             memset(preset_name_out, '\0', sizeof(preset_name_out));
-            strncpy(preset_name_out, preset_name, sizeof(preset_name_out) - 1);
+            snprintf(preset_name_out, sizeof(preset_name_out), "%s", preset_name);
         }
 
         for (i = 0; i < presets.count; i++) {
@@ -1042,7 +1044,7 @@ int ptz_set_preset()
     destroy_presets();
 
     // Unhandled race condition
-    sprintf(sys_command, service_ctx.ptz_node.set_preset, preset_number, (char *) preset_name_out);
+    snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.set_preset, preset_number, (char *) preset_name_out);
     system(sys_command);
     sleep(1);
 
@@ -1055,7 +1057,7 @@ int ptz_set_preset()
     preset_token_out[0] = '\0';
     for (i = 0; i < presets.count; i++) {
         if (strcasecmp(presets.items[i].name, preset_name_out) == 0) {
-            sprintf(preset_token_out, "PresetToken_%d", presets.items[i].number);
+            snprintf(preset_token_out, sizeof(preset_token_out), "PresetToken_%d", presets.items[i].number);
             break;
         }
     }
@@ -1091,7 +1093,7 @@ int ptz_set_home_position()
         return -3;
     }
 
-    strcpy(sys_command, service_ctx.ptz_node.set_home_position);
+    snprintf(sys_command, sizeof(sys_command), "%s", service_ctx.ptz_node.set_home_position);
     system(sys_command);
 
     long size = cat(NULL, "ptz_service_files/SetHomePosition.xml", 0);
@@ -1129,7 +1131,7 @@ int ptz_remove_preset()
         return -4;
     }
 
-    sprintf(sys_command, service_ctx.ptz_node.remove_preset, preset_number);
+    snprintf(sys_command, sizeof(sys_command), service_ctx.ptz_node.remove_preset, preset_number);
     system(sys_command);
 
     long size = cat(NULL, "ptz_service_files/RemovePreset.xml", 0);

@@ -156,7 +156,7 @@ int create_pid(char *file_name)
         return -1;
 
     memset(pid_buffer, '\0', PID_SIZE);
-    sprintf(pid_buffer, "%ld\n", (long) getpid());
+    snprintf(pid_buffer, sizeof(pid_buffer), "%ld\n", (long) getpid());
     if (fwrite(pid_buffer, strlen(pid_buffer), 1, f) != 1) {
         fclose(f);
         return -2;
@@ -281,7 +281,7 @@ int send_notify(char *reference, int alarm_index, time_t e_time, char *property,
     }
     strncpy(page, p ? p : "/", sizeof(page) - 1);
     page[sizeof(page) - 1] = '\0';
-    if (page[0] == '\0') strcpy(page, "/");
+    if (page[0] == '\0') snprintf(page, sizeof(page), "%s", "/");
 
     snprintf(port_str, sizeof(port_str), "%d", port);
 
@@ -315,7 +315,7 @@ int send_notify(char *reference, int alarm_index, time_t e_time, char *property,
     freeaddrinfo(res);
 
     log_info("Sending Notify message.");
-    sprintf(template_file, "%s/Notify.xml", template_dir);
+    snprintf(template_file, sizeof(template_file), "%s/Notify.xml", template_dir);
     size = cat(NULL, template_file, 12,
             "%TOPIC%", service_ctx.events[alarm_index].topic,
             "%UTC_TIME%", utctime,
@@ -323,7 +323,7 @@ int send_notify(char *reference, int alarm_index, time_t e_time, char *property,
             "%SOURCE_NAME%", service_ctx.events[alarm_index].source_name,
             "%SOURCE_VALUE%", service_ctx.events[alarm_index].source_value,
             "%VALUE%", value);
-    sprintf(size_string, "%d", size);
+    snprintf(size_string, sizeof(size_string), "%d", size);
 
     header = (char *) malloc((strlen(header_fmt) + strlen(page) + strlen(host_hdr) + strlen(size_string) + 4) * sizeof(char));
     if (header == NULL) {
@@ -331,7 +331,7 @@ int send_notify(char *reference, int alarm_index, time_t e_time, char *property,
         close(sockfd);
         return -3;
     }
-    sprintf(header, header_fmt, page, host_hdr, size_string);
+    snprintf(header, strlen(header_fmt) + strlen(page) + strlen(host_hdr) + strlen(size_string) + 4, header_fmt, page, host_hdr, size_string);
 
     message = (char *) malloc((size + strlen(header) + 1) * sizeof(char));
     if (message == NULL) {
@@ -341,7 +341,7 @@ int send_notify(char *reference, int alarm_index, time_t e_time, char *property,
         return -3;
     }
 
-    strcpy(message, header);
+    snprintf(message, size + strlen(header) + 1, "%s", header);
     cat(&message[strlen(header)], template_file, 12,
             "%TOPIC%", service_ctx.events[alarm_index].topic,
             "%UTC_TIME%", utctime,
@@ -381,9 +381,9 @@ void sync_events(int sub_index)
         if (is_topic_in_expression(subs_evts->subscriptions[sub_index].topic_expression, service_ctx.events[i].topic)) {
 
             if (access(service_ctx.events[i].input_file, F_OK) == 0)
-                strcpy(value, "true");
+                snprintf(value, sizeof(value), "%s", "true");
             else
-                strcpy(value, "false");
+                snprintf(value, sizeof(value), "%s", "false");
 
             // Semaphore is already ok
             if (subs_evts->subscriptions[sub_index].used == SUB_PUSH) {
@@ -506,12 +506,12 @@ int handle_inotify_events(int fd, char *dir)
 
             /* Print event type. */
             if (((event->mask & IN_CREATE) || (event->mask & IN_DELETE)) && ((event->mask & IN_ISDIR) == 0) && (event->len)) {
-                sprintf(input_file, "%s/%s", dir, event->name);
+                snprintf(input_file, sizeof(input_file), "%s/%s", dir, event->name);
                 if (event->mask & IN_CREATE) {
-                    strcpy(value, "true");
+                    snprintf(value, sizeof(value), "%s", "true");
                     log_debug("File %s created", input_file);
                 } else if (event->mask & IN_DELETE) {
-                    strcpy(value, "false");
+                    snprintf(value, sizeof(value), "%s", "false");
                     log_debug("File %s deleted", input_file);
                 }
 
@@ -588,15 +588,15 @@ int main(int argc, char **argv)  {
     int sub_count;
 
     conf_file = (char *) malloc((strlen(DEFAULT_CONF_FILE) + 1) * sizeof(char));
-    strcpy(conf_file, DEFAULT_CONF_FILE);
+    snprintf(conf_file, strlen(DEFAULT_CONF_FILE) + 1, "%s", DEFAULT_CONF_FILE);
     if (access(conf_file, F_OK) == -1) {
         free(conf_file);
         conf_file = (char *) malloc((strlen(DEFAULT_JSON_CONF_FILE) + 1) * sizeof(char));
-        strcpy(conf_file, DEFAULT_JSON_CONF_FILE);
+        snprintf(conf_file, strlen(DEFAULT_JSON_CONF_FILE) + 1, "%s", DEFAULT_JSON_CONF_FILE);
     }
 
-    strcpy(pid_file, DEFAULT_PID_FILE);
-    strcpy(template_dir, DEFAULT_TEMPLATE_DIR);
+    snprintf(pid_file, sizeof(pid_file), "%s", DEFAULT_PID_FILE);
+    snprintf(template_dir, sizeof(template_dir), "%s", DEFAULT_TEMPLATE_DIR);
     foreground = 0;
     debug = 5;
 
@@ -627,7 +627,7 @@ int main(int argc, char **argv)  {
             if (strlen(optarg) < MAX_LEN - 1) {
                 free(conf_file);
                 conf_file = (char *) malloc((strlen(optarg) + 1) * sizeof(char));
-                strcpy(conf_file, optarg);
+                snprintf(conf_file, strlen(optarg) + 1, "%s", optarg);
             } else {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
@@ -636,12 +636,12 @@ int main(int argc, char **argv)  {
 
         case 'p':
             if (strlen(optarg) < 1024)
-                strcpy(pid_file, optarg);
+                snprintf(pid_file, sizeof(pid_file), "%s", optarg);
             break;
 
         case 't':
             if (strlen(optarg) < sizeof(template_dir))
-                strcpy(template_dir, optarg);
+                snprintf(template_dir, sizeof(template_dir), "%s", optarg);
             break;
 
         case 'f':

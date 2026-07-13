@@ -119,12 +119,12 @@ void rotate_log()
         }
     }
 
-    strcpy(tmp_log_file[0], DEFAULT_LOG_FILE);
+    snprintf(tmp_log_file[0], sizeof(tmp_log_file[0]), "%s", DEFAULT_LOG_FILE);
     for (i = 1; i < ROTATION_LOG_LENGTH; i++) {
-        sprintf(tmp_log_file[i], DEFAULT_LOG_FILE);
+        snprintf(tmp_log_file[i], sizeof(tmp_log_file[i]), DEFAULT_LOG_FILE);
         p = strrchr(tmp_log_file[i], '.');
         p++;
-        sprintf(p, "%d.log", i);
+        snprintf(p, sizeof(tmp_log_file[i]) - (p - tmp_log_file[i]), "%d.log", i);
     }
 
     for (i = ROTATION_LOG_LENGTH - 1; i > 0; i--) {
@@ -170,9 +170,9 @@ int main(int argc, char ** argv)
         exit(EXIT_FAILURE);
     }
     conf_file = conf_file_buffer;
-    strcpy(conf_file, DEFAULT_CONF_FILE);
+    snprintf(conf_file, sizeof(conf_file_buffer), "%s", DEFAULT_CONF_FILE);
     if (access(conf_file, F_OK) == -1) {
-        strcpy(conf_file, DEFAULT_JSON_CONF_FILE);
+        snprintf(conf_file, sizeof(conf_file_buffer), "%s", DEFAULT_JSON_CONF_FILE);
     }
 
     while (1) {
@@ -200,7 +200,7 @@ int main(int argc, char ** argv)
             /* Check for various possible errors */
             if (strlen(optarg) < MAX_LEN - 1) {
                 conf_file = (char *) malloc((strlen(optarg) + 1) * sizeof(char));
-                strcpy(conf_file, optarg);
+                snprintf(conf_file, strlen(optarg) + 1, "%s", optarg);
             } else {
                 print_usage(argv[0]);
                 exit(EXIT_FAILURE);
