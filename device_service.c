@@ -622,7 +622,8 @@ int device_get_network_interfaces()
     char ll_addr[INET6_ADDRSTRLEN] = "";
     char gl_addr[INET6_ADDRSTRLEN] = "";
     int ll_prefix = 64, gl_prefix = 64;
-    char ipv6_block[640];
+    char ipv6_enabled[8];
+    char ipv6_config[512];
     int ipv6_found;
     int ret;
 
@@ -651,36 +652,38 @@ int device_get_network_interfaces()
                 ll_addr, ll_prefix);
         if (ipv6_found & 2)
             snprintf(gl_elem, sizeof(gl_elem),
-                "<tt:Manual><tt:Address>%s</tt:Address>"
-                "<tt:PrefixLength>%d</tt:PrefixLength></tt:Manual>",
+                "<tt:FromRA><tt:Address>%s</tt:Address>"
+                "<tt:PrefixLength>%d</tt:PrefixLength></tt:FromRA>",
                 gl_addr, gl_prefix);
-        snprintf(ipv6_block, sizeof(ipv6_block),
-            "<tt:IPv6><tt:Enabled>true</tt:Enabled><tt:Config>"
-            "<tt:AcceptRouterAdvert>false</tt:AcceptRouterAdvert>"
-            "<tt:DHCP>Off</tt:DHCP>%s%s</tt:Config></tt:IPv6>",
+        strncpy(ipv6_enabled, "true", sizeof(ipv6_enabled));
+        snprintf(ipv6_config, sizeof(ipv6_config),
+            "<tt:Config><tt:AcceptRouterAdvert>true</tt:AcceptRouterAdvert>"
+            "<tt:DHCP>Off</tt:DHCP>%s%s</tt:Config>",
             ll_elem, gl_elem);
     } else {
-        snprintf(ipv6_block, sizeof(ipv6_block),
-            "<tt:IPv6><tt:Enabled>false</tt:Enabled></tt:IPv6>");
+        strncpy(ipv6_enabled, "false", sizeof(ipv6_enabled));
+        ipv6_config[0] = '\0';
     }
 
-    long size = cat(NULL, "device_service_files/GetNetworkInterfaces.xml", 12,
+    long size = cat(NULL, "device_service_files/GetNetworkInterfaces.xml", 14,
             "%INTERFACE%", service_ctx.ifs,
             "%MAC_ADDRESS%", mac_address,
             "%MTU%", mtu,
             "%IP_ADDRESS%", address,
             "%NETMASK%", sprefix_len,
-            "%IPV6_BLOCK%", ipv6_block);
+            "%IPV6_ENABLED%", ipv6_enabled,
+            "%IPV6_CONFIG%", ipv6_config);
 
     output_http_headers(size);
 
-    return cat("stdout", "device_service_files/GetNetworkInterfaces.xml", 12,
+    return cat("stdout", "device_service_files/GetNetworkInterfaces.xml", 14,
             "%INTERFACE%", service_ctx.ifs,
             "%MAC_ADDRESS%", mac_address,
             "%MTU%", mtu,
             "%IP_ADDRESS%", address,
             "%NETMASK%", sprefix_len,
-            "%IPV6_BLOCK%", ipv6_block);
+            "%IPV6_ENABLED%", ipv6_enabled,
+            "%IPV6_CONFIG%", ipv6_config);
 }
 
 int device_get_discovery_mode()
@@ -701,6 +704,106 @@ int device_get_endpoint_reference()
 
     return cat("stdout", "device_service_files/GetEndpointReference.xml", 2,
             "%DEVICE_UUID%", service_ctx.device_uuid);
+}
+
+int device_get_network_default_gateway()
+{
+    char gw[INET_ADDRSTRLEN] = "";
+    get_default_gateway(gw, sizeof(gw));
+    long size = cat(NULL, "device_service_files/GetNetworkDefaultGateway.xml", 2,
+            "%GATEWAY%", gw);
+    output_http_headers(size);
+    return cat("stdout", "device_service_files/GetNetworkDefaultGateway.xml", 2,
+            "%GATEWAY%", gw);
+}
+
+int device_get_network_protocols()
+{
+    long size = cat(NULL, "device_service_files/GetNetworkProtocols.xml", 0);
+    output_http_headers(size);
+    return cat("stdout", "device_service_files/GetNetworkProtocols.xml", 0);
+}
+
+int device_get_hostname()
+{
+    char hostname[256] = "";
+    gethostname(hostname, sizeof(hostname));
+
+    long size = cat(NULL, "device_service_files/GetHostname.xml", 2,
+            "%HOSTNAME%", hostname);
+    output_http_headers(size);
+    return cat("stdout", "device_service_files/GetHostname.xml", 2,
+            "%HOSTNAME%", hostname);
+}
+
+int device_get_dns()
+{
+    /* GetDNS returns tt:DNSInformation, whose DNSManual element is an
+     * unbounded list: report every configured resolver, one entry each. */
+    char dns_list[512];
+    char dns_block[2048] = "";
+    if (get_dns_server(dns_list, sizeof(dns_list)) > 0) {
+        char *save = NULL;
+        char *s;
+        for (s = strtok_r(dns_list, "\n", &save); s != NULL; s = strtok_r(NULL, "\n", &save)) {
+            char entry[256];
+            if (strchr(s, ':')) {
+                snprintf(entry, sizeof(entry),
+                        "<tt:DNSManual><tt:Type>IPv6</tt:Type><tt:IPv6Address>%s</tt:IPv6Address></tt:DNSManual>",
+                        s);
+            } else {
+                snprintf(entry, sizeof(entry),
+                        "<tt:DNSManual><tt:Type>IPv4</tt:Type><tt:IPv4Address>%s</tt:IPv4Address></tt:DNSManual>",
+                        s);
+            }
+            strncat(dns_block, entry, sizeof(dns_block) - strlen(dns_block) - 1);
+        }
+    }
+
+    long size = cat(NULL, "device_service_files/GetDNS.xml", 2,
+            "%DNS_BLOCK%", dns_block);
+    output_http_headers(size);
+    return cat("stdout", "device_service_files/GetDNS.xml", 2,
+            "%DNS_BLOCK%", dns_block);
+}
+
+int device_get_ntp()
+{
+    /* GetNTP returns tt:NTPInformation, whose NTPManual element is an
+     * unbounded list: report every configured NTP server, one entry each.
+     * NetworkHost Type reflects whether the entry is an IPv4/IPv6 literal
+     * or a DNS name. */
+    char ntp_list[512];
+    char ntp_block[2048] = "";
+    if (get_ntp_server(ntp_list, sizeof(ntp_list)) > 0) {
+        char *save = NULL;
+        char *s;
+        struct in_addr v4;
+        struct in6_addr v6;
+        for (s = strtok_r(ntp_list, "\n", &save); s != NULL; s = strtok_r(NULL, "\n", &save)) {
+            char entry[320];
+            if (inet_pton(AF_INET, s, &v4) == 1) {
+                snprintf(entry, sizeof(entry),
+                        "<tt:NTPManual><tt:Type>IPv4</tt:Type><tt:IPv4Address>%s</tt:IPv4Address></tt:NTPManual>",
+                        s);
+            } else if (inet_pton(AF_INET6, s, &v6) == 1) {
+                snprintf(entry, sizeof(entry),
+                        "<tt:NTPManual><tt:Type>IPv6</tt:Type><tt:IPv6Address>%s</tt:IPv6Address></tt:NTPManual>",
+                        s);
+            } else {
+                snprintf(entry, sizeof(entry),
+                        "<tt:NTPManual><tt:Type>DNS</tt:Type><tt:DNSname>%s</tt:DNSname></tt:NTPManual>",
+                        s);
+            }
+            strncat(ntp_block, entry, sizeof(ntp_block) - strlen(ntp_block) - 1);
+        }
+    }
+
+    long size = cat(NULL, "device_service_files/GetNTP.xml", 2,
+            "%NTP_BLOCK%", ntp_block);
+    output_http_headers(size);
+    return cat("stdout", "device_service_files/GetNTP.xml", 2,
+            "%NTP_BLOCK%", ntp_block);
 }
 
 int device_unsupported(const char *method)

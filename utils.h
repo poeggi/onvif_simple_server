@@ -89,6 +89,7 @@ int get_ipv6_address(const char *ifname, char *ll_addr, int *ll_prefix, char *gl
 int get_mac_address(char *address, char *name);
 int netmask2prefixlen(char *netmask);
 int get_mtu(char *if_name);
+int get_default_gateway(char *gw, size_t len);
 char *trim(char *s);
 char *trim_mf(char *s);
 int html_escape(char *url, int max_len);
@@ -110,6 +111,10 @@ void gen_uuid_v5_mac(char *uuid_str, const uint8_t mac[6]);
 int get_from_query_string(char **ret, int *ret_size, char *par);
 int set_video_codec(char *buffer, int buffer_len, int codec, int ver);
 int set_audio_codec(char *buffer, int buffer_len, int codec, int ver);
+/* Fill buf with all configured DNS/NTP servers, newline-separated.
+ * Return the number of servers written (0 if none). */
+int get_dns_server(char *buf, size_t len);
+int get_ntp_server(char *buf, size_t len);
 topic_expressions_t *parseTopicExpression(const char *input);
 void free_topic_expression(topic_expressions_t *p);
 int is_topic_in_expression(const char *topic_expression, char *topic);

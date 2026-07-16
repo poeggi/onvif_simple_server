@@ -21,6 +21,9 @@
 #include <net/if.h> 
 #include <netinet/in.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -647,6 +650,36 @@ int get_mtu(char *if_name)
         ret = ifr.ifr_mtu;
     }
     return ret;
+}
+
+/* Read the default IPv4 gateway from /proc/net/route.
+ * Returns 0 and fills gw on success, -1 if no default route exists. */
+int get_default_gateway(char *gw, size_t len)
+{
+    FILE *fp;
+    char line[256];
+    unsigned long dest, gwaddr;
+    unsigned int flags;
+
+    fp = fopen("/proc/net/route", "r");
+    if (!fp) return -1;
+
+    fgets(line, sizeof(line), fp); /* skip header */
+
+    while (fgets(line, sizeof(line), fp)) {
+        char iface[16];
+        if (sscanf(line, "%15s %lX %lX %X", iface, &dest, &gwaddr, &flags) == 4) {
+            if (dest == 0 && (flags & 0x2) && gwaddr != 0) {
+                struct in_addr addr;
+                addr.s_addr = (uint32_t)gwaddr;
+                inet_ntop(AF_INET, &addr, gw, len);
+                fclose(fp);
+                return 0;
+            }
+        }
+    }
+    fclose(fp);
+    return -1;
 }
 
 /**
@@ -1711,6 +1744,139 @@ int is_topic_in_expression(const char *topic_expression, char *topic)
     }
     free_topic_expression(te); // Fix memory leak
     return 0;
+}
+
+/* Return 1 if s is a valid IPv4 or IPv6 address. */
+static int is_valid_ip(const char *s)
+{
+    struct in_addr  v4;
+    struct in6_addr v6;
+    return inet_pton(AF_INET,  s, &v4) == 1 ||
+           inet_pton(AF_INET6, s, &v6) == 1;
+}
+
+/* Return 1 if s is a valid hostname ([a-zA-Z0-9.-], <=253 chars) or IP address. */
+static int is_valid_hostname_or_ip(const char *s)
+{
+    if (is_valid_ip(s)) return 1;
+    size_t slen = strlen(s);
+    if (slen == 0 || slen > 253) return 0;
+    for (const char *p = s; *p; p++)
+        if (!isalnum((unsigned char)*p) && *p != '.' && *p != '-') return 0;
+    return 1;
+}
+
+/*
+ * Fork /bin/sh -c cmd, capture stdout, kill child after timeout_sec seconds.
+ * Returns bytes captured (null-terminated in buf), or -1 on fork failure.
+ */
+static ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout_sec)
+{
+    if (len == 0) return -1;
+    int pipefd[2];
+    if (pipe(pipefd) != 0) return -1;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return -1;
+    }
+
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        int dn = open("/dev/null", O_WRONLY);
+        if (dn >= 0) { dup2(dn, STDERR_FILENO); close(dn); }
+        execl("/bin/sh", "sh", "-c", cmd, NULL);
+        _exit(127);
+    }
+
+    close(pipefd[1]);
+    fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+
+    ssize_t total = 0;
+    struct timeval tv = { .tv_sec = timeout_sec, .tv_usec = 0 };
+    fd_set rfds;
+    FD_ZERO(&rfds);
+    FD_SET(pipefd[0], &rfds);
+
+    if (select(pipefd[0] + 1, &rfds, NULL, NULL, &tv) > 0) {
+        ssize_t n;
+        while (total < (ssize_t)(len - 1) &&
+               (n = read(pipefd[0], buf + total, len - 1 - (size_t)total)) > 0)
+            total += n;
+    }
+
+    buf[total] = '\0';
+    close(pipefd[0]);
+
+    if (waitpid(pid, NULL, WNOHANG) == 0) {
+        kill(pid, SIGKILL);
+        waitpid(pid, NULL, 0);
+    }
+
+    return total;
+}
+
+/*
+ * Split raw (newline-separated) into lines, validate each with is_valid(),
+ * and write the accepted lines newline-separated into buf. The helper scripts
+ * already de-duplicate, so no de-dup is done here. Returns the number of
+ * servers written (0 if none fit or none are valid).
+ */
+static int filter_servers(char *raw, char *buf, size_t len,
+                          int (*is_valid)(const char *))
+{
+    int count = 0;
+    size_t used = 0;
+    char *save = NULL;
+    char *line;
+
+    if (len == 0) return 0;
+    buf[0] = '\0';
+
+    for (line = strtok_r(raw, "\r\n", &save);
+         line != NULL;
+         line = strtok_r(NULL, "\r\n", &save)) {
+        size_t l;
+        /* Trim surrounding whitespace. */
+        while (*line == ' ' || *line == '\t') line++;
+        l = strlen(line);
+        while (l > 0 && (line[l-1] == ' ' || line[l-1] == '\t')) line[--l] = '\0';
+        if (l == 0 || !is_valid(line)) continue;
+        /* Need room for an optional separator, the entry, and the NUL. */
+        if (used + (count > 0 ? 1 : 0) + l + 1 > len) break;
+        if (count > 0) buf[used++] = '\n';
+        memcpy(buf + used, line, l);
+        used += l;
+        buf[used] = '\0';
+        count++;
+    }
+    return count;
+}
+
+/*
+ * Fill buf with every configured DNS server address (newline-separated).
+ * Returns the number of servers written (0 if none).
+ */
+int get_dns_server(char *buf, size_t len)
+{
+    char tmp[512] = "";
+    if (spawn_capture("scripts/get_dns.sh", tmp, sizeof(tmp), 2) <= 0) return 0;
+    return filter_servers(tmp, buf, len, is_valid_ip);
+}
+
+/*
+ * Fill buf with every configured NTP server (newline-separated).
+ * Returns the number of servers written (0 if none).
+ */
+int get_ntp_server(char *buf, size_t len)
+{
+    char tmp[512] = "";
+    if (spawn_capture("scripts/get_ntp.sh", tmp, sizeof(tmp), 2) <= 0) return 0;
+    return filter_servers(tmp, buf, len, is_valid_hostname_or_ip);
 }
 
 /**
