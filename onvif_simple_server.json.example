@@ -26,6 +26,8 @@
             "url": "rtsp://%s/ch0_0.h264",
             "snapurl": "http://%s/cgi-bin/snapshot.sh",
             "type": "H264",
+            "bitrate": 0,
+            "framerate": 30,
             "audio_encoder": "AAC",
             "audio_decoder": "G711"
         },
@@ -36,6 +38,8 @@
             "url": "rtsp://%s/ch0_1.h264",
             "snapurl": "http://%s/cgi-bin/snapshot.sh",
             "type": "H264",
+            "bitrate": 0,
+            "framerate": 30,
             "audio_encoder": "AAC",
             "audio_decoder": "NONE"
         }

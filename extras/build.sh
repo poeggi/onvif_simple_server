@@ -79,6 +79,8 @@ cp -R ../notify_files/* $INSTALL_DIR/etc/onvif_notify_server
 cp ../wsd_simple_server $INSTALL_DIR/bin || exit 1
 cp -R ../wsd_files/* $INSTALL_DIR/etc/wsd_simple_server
 
+cp -R ../scripts $INSTALL_DIR/www/onvif
+
 cp ../onvif_simple_server.conf.example $INSTALL_DIR/etc/onvif_simple_server.conf
 
 # Strip binaries
