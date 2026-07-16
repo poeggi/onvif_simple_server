@@ -116,6 +116,8 @@ height=1080
 url=rtsp://%s/ch0_0.h264
 snapurl=http://%s/cgi-bin/snapshot.sh?res=high&watermark=yes
 type=H264
+bitrate=0
+framerate=30
 audio_encoder=AAC
 audio_decoder=G711
 
@@ -126,6 +128,8 @@ height=360
 url=rtsp://%s/ch0_1.h264
 snapurl=http://%s/cgi-bin/snapshot.sh?res=low&watermark=yes
 type=H264
+bitrate=0
+framerate=30
 audio_encoder=AAC
 audio_decoder=NONE
 
@@ -280,22 +284,21 @@ Check the code for information.
 wsd_simple server supports the following options
 
 ```
-Usage: wsd_simple_server [-i INTERFACE] -x XADDR [-6 XADDR6] [-m MODEL] [-n MANUFACTURER] -p PID_FILE [-f] [-d LEVEL]
+Usage: /tmp/sd/yi-hack/bin/wsd_simple_server [-i INTERFACE] -x XADDR [-m MODEL] [-n MANUFACTURER] -p PID_FILE [-t TEMPLATE_DIR] [-f] [-d LEVEL]
 
         -i, --if_name
-                network interface (auto-detected if omitted; use -i to force a specific interface)
+                network interface (auto-detected; use -i to force a specific interface)
         -x, --xaddr
-                IPv4 resource address (use %s as placeholder for the detected IP)
-        -6, --xaddr6
-                IPv6 resource address template (use %s as placeholder for the detected
-                IPv6 address; include brackets, e.g. http://[%s]:PORT/path)
-                IPv6 WS-Discovery is enabled only when this option is provided
+                resource address template (use %s as placeholder for the detected IP;
+                IPv6 is auto-detected and the address is bracketed automatically)
         -m, --model
                 model name
         -n, --hardware
                 hardware manufacturer
         -p, --pid_file
                 pid file
+        -t, --template_dir
+                template directory (default: /etc/wsd_simple_server)
         -f, --foreground
                 don't daemonize
         -d LEVEL, --debug LEVEL
@@ -306,9 +309,9 @@ Usage: wsd_simple_server [-i INTERFACE] -x XADDR [-6 XADDR6] [-m MODEL] [-n MANU
 | Option | Description | Example |
 | --- | --- | --- |
 | if_name | network interface (optional; auto-detected if omitted) | eth0 |
-| xaddr | IPv4 resource address for the ONVIF server | http://%s/onvif/device_service |
-| xaddr6 | IPv6 resource address for the ONVIF server (optional) | http://[%s]:8080/onvif/device_service |
+| xaddr | resource address for the ONVIF server | http://%s/onvif/device_service |
 | pid_file | is the pid file created by the daemon | /var/run/wsd_simple_server.pid |
+| template_dir | the folder containing template files | /etc/wsd_simple_server |
 | foreground | don't fork | - |
 | debug | debug level from 0 to 5 | - |
 
@@ -316,7 +319,7 @@ Usage: wsd_simple_server [-i INTERFACE] -x XADDR [-6 XADDR6] [-m MODEL] [-n MANU
 
 #### IPv6 / dual-stack WS-Discovery
 
-When `-6 XADDR6` is given, `wsd_simple_server` operates in dual-stack mode:
+IPv6 is auto-detected.
 
 - Uses a single `AF_INET6` dual-stack UDP socket (`IPV6_V6ONLY=0`) bound to `:::3702`
 - Joins the IPv4 WSD multicast group `239.255.255.250:3702` via `MCAST_JOIN_GROUP` (RFC 3678)
@@ -340,12 +343,14 @@ The process can use inotify interface if supported from the device, otherwise it
 onvif_notify_server supports the following options but you should use them just for debugging purpose
 
 ```
-Usage: onvif_notify_server [-p PID_FILE] [-q NUM] [-f] [-d LEVEL]
+Usage: /tmp/sd/yi-hack/bin/onvif_notify_server [-c CONF_FILE] [-p PID_FILE] [-t TEMPLATE_DIR] [-f] [-d LEVEL]
 
         -c CONF_FILE, --conf_file CONF_FILE
                 path of the configuration file
         -p PID_FILE, --pid_file PID_FILE
                 pid file
+        -t TEMPLATE_DIR, --template_dir TEMPLATE_DIR
+                template directory (default: /tmp/sd/yi-hack/etc/onvif_notify_server)
         -f, --foreground
                 don't daemonize
         -d LEVEL, --debug LEVEL
@@ -384,6 +389,12 @@ GetServiceCapabilities
 GetSystemDateAndTime
 GetUsers
 GetWsdlUrl
+GetEndpointReference
+GetNetworkDefaultGateway
+GetNetworkProtocols
+GetHostname
+GetDNS
+GetNTP
 SystemReboot
 ```
 
@@ -494,6 +505,7 @@ Stop
 Thanks to:
 - rxi - for the logging library https://github.com/rxi/log.c
 - Aaron Voisine - for ezxml library https://ezxml.sourceforge.net/
+- poeggi (https://github.com/poeggi) - for all his contributions to this project
 
 ## License
 [GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
