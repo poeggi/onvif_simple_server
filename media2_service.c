@@ -24,6 +24,7 @@
 #include "log.h"
 #include "ezxml_wrapper.h"
 #include "onvif_simple_server.h"
+#include "ptz_service.h"
 
 extern service_context_t service_ctx;
 
@@ -203,7 +204,7 @@ int media2_get_profiles()
                 }
                 if (typePTZ) {
                     if (service_ctx.ptz_node.enable == 1) {
-                        size += cat(dest, "media2_service_files/GetProfiles_PTZ.xml", 12,
+                        size += cat(dest, ptz_supports_zoom() ? "media2_service_files/GetProfiles_PTZ.xml" : "media2_service_files/GetProfiles_PTZ_nozoom.xml", 12,
                                 "%MIN_X%", min_x,
                                 "%MAX_X%", max_x,
                                 "%MIN_Y%", min_y,
@@ -282,7 +283,7 @@ int media2_get_profiles()
                 }
                 if (typePTZ) {
                     if (service_ctx.ptz_node.enable == 1) {
-                        size += cat(dest, "media2_service_files/GetProfiles_PTZ.xml", 12,
+                        size += cat(dest, ptz_supports_zoom() ? "media2_service_files/GetProfiles_PTZ.xml" : "media2_service_files/GetProfiles_PTZ_nozoom.xml", 12,
                                 "%MIN_X%", min_x,
                                 "%MAX_X%", max_x,
                                 "%MIN_Y%", min_y,
@@ -350,7 +351,7 @@ int media2_get_profiles()
                 }
                 if (typePTZ) {
                     if (service_ctx.ptz_node.enable == 1) {
-                        size += cat(dest, "media2_service_files/GetProfiles_PTZ.xml", 12,
+                        size += cat(dest, ptz_supports_zoom() ? "media2_service_files/GetProfiles_PTZ.xml" : "media2_service_files/GetProfiles_PTZ_nozoom.xml", 12,
                                 "%MIN_X%", min_x,
                                 "%MAX_X%", max_x,
                                 "%MIN_Y%", min_y,

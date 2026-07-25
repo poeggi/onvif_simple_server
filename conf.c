@@ -66,6 +66,7 @@ int process_conf_file(char *file)
     service_ctx.scopes = NULL;
     service_ctx.scopes_num = 0;
     service_ctx.ptz_node.enable = 0;
+    service_ctx.ptz_node.zoom_enable = -1;
     service_ctx.relay_outputs = NULL;
     service_ctx.relay_outputs_num = 0;
     service_ctx.events = NULL;
@@ -291,6 +292,7 @@ int process_conf_file(char *file)
                 service_ctx.ptz_node.enable = 1;
             }
             service_ctx.ptz_node.min_step_x = 0.0;
+            service_ctx.ptz_node.zoom_enable = -1;
             service_ctx.ptz_node.max_step_x = 360.0;
             service_ctx.ptz_node.min_step_y = 0.0;
             service_ctx.ptz_node.max_step_y = 180.0;
@@ -312,6 +314,16 @@ int process_conf_file(char *file)
             service_ctx.ptz_node.remove_preset = NULL;
             service_ctx.ptz_node.jump_to_abs = NULL;
             service_ctx.ptz_node.jump_to_rel = NULL;
+        } else if (strcasecmp(param, "zoom") == 0) {
+            if (service_ctx.ptz_node.enable == 1) {
+                if ((strcasecmp(value, "1") == 0) || (strcasecmp(value, "yes") == 0) || (strcasecmp(value, "true") == 0)) {
+                    service_ctx.ptz_node.zoom_enable = 1;
+                } else if ((strcasecmp(value, "0") == 0) || (strcasecmp(value, "no") == 0) || (strcasecmp(value, "false") == 0)) {
+                    service_ctx.ptz_node.zoom_enable = 0;
+                } else {
+                    service_ctx.ptz_node.zoom_enable = -1;
+                }
+            }
         } else if (strcasecmp(param, "min_step_x") == 0) {
             if (service_ctx.ptz_node.enable == 1) {
                 if (value[0] == '\0') {
@@ -799,6 +811,7 @@ int process_json_conf_file(char *file)
     service_ctx.scopes = NULL;
     service_ctx.scopes_num = 0;
     service_ctx.ptz_node.enable = 0;
+    service_ctx.ptz_node.zoom_enable = -1;
     service_ctx.relay_outputs = NULL;
     service_ctx.relay_outputs_num = 0;
     service_ctx.events = NULL;
@@ -1055,6 +1068,14 @@ int process_json_conf_file(char *file)
         log_debug("Found PTZ section in configuration");
 
         get_int_from_json(&(service_ctx.ptz_node.enable), value, "enable");
+        service_ctx.ptz_node.zoom_enable = -1;
+        if (json_object_object_get_ex(value, "zoom", &item)) {
+            if (json_object_is_type(item, json_type_boolean)) {
+                service_ctx.ptz_node.zoom_enable = json_object_get_boolean(item) ? 1 : 0;
+            } else if (json_object_is_type(item, json_type_int)) {
+                service_ctx.ptz_node.zoom_enable = json_object_get_int(item) ? 1 : 0;
+            }
+        }
         get_double_from_json(&(service_ctx.ptz_node.min_step_x), value, "min_step_x");
         get_double_from_json(&(service_ctx.ptz_node.max_step_x), value, "max_step_x");
         get_double_from_json(&(service_ctx.ptz_node.min_step_y), value, "min_step_y");
@@ -1081,6 +1102,7 @@ int process_json_conf_file(char *file)
 
         // Print debug
         log_debug("enable: %d", service_ctx.ptz_node.enable);
+        log_debug("zoom: %d", service_ctx.ptz_node.zoom_enable);
         log_debug("min_step_x: %.1f", service_ctx.ptz_node.min_step_x);
         log_debug("max_step_x: %.1f", service_ctx.ptz_node.max_step_x);
         log_debug("min_step_y: %.1f", service_ctx.ptz_node.min_step_y);
@@ -1345,6 +1367,7 @@ void print_conf_help()
     fprintf(stderr, "\n");
     fprintf(stderr, "\t#PTZ\n");
     fprintf(stderr, "\tptz=1\n");
+    fprintf(stderr, "\tzoom=1\n");
     fprintf(stderr, "\tmin_step_x=0\n");
     fprintf(stderr, "\tmax_step_x=360\n");
     fprintf(stderr, "\tmin_step_y=0\n");

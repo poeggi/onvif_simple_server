@@ -30,6 +30,26 @@
 extern service_context_t service_ctx;
 presets_t presets;
 
+int ptz_supports_zoom()
+{
+    if (service_ctx.ptz_node.enable == 0) {
+        return 0;
+    }
+    if (service_ctx.ptz_node.zoom_enable == 0) {
+        return 0;
+    }
+    if (service_ctx.ptz_node.zoom_enable == 1) {
+        return 1;
+    }
+    if (service_ctx.ptz_node.move_in != NULL || service_ctx.ptz_node.move_out != NULL) {
+        return 1;
+    }
+    if (service_ctx.ptz_node.min_step_z != 0.0 || service_ctx.ptz_node.max_step_z != 0.0) {
+        return 1;
+    }
+    return 0;
+}
+
 int init_presets()
 {
     FILE *fp;
@@ -140,7 +160,9 @@ int ptz_get_configurations()
     sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
     sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
 
-    long size = cat(NULL, "ptz_service_files/GetConfigurations.xml", 12,
+    char *template = ptz_supports_zoom() ? "ptz_service_files/GetConfigurations.xml" : "ptz_service_files/GetConfigurations_nozoom.xml";
+
+    long size = cat(NULL, template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -150,7 +172,7 @@ int ptz_get_configurations()
 
     output_http_headers(size);
 
-    return cat("stdout", "ptz_service_files/GetConfigurations.xml", 12,
+    return cat("stdout", template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -175,7 +197,9 @@ int ptz_get_configuration()
     sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
     sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
 
-    long size = cat(NULL, "ptz_service_files/GetConfiguration.xml", 12,
+    char *template = ptz_supports_zoom() ? "ptz_service_files/GetConfiguration.xml" : "ptz_service_files/GetConfiguration_nozoom.xml";
+
+    long size = cat(NULL, template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -185,7 +209,7 @@ int ptz_get_configuration()
 
     output_http_headers(size);
 
-    return cat("stdout", "ptz_service_files/GetConfiguration.xml", 12,
+    return cat("stdout", template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -210,7 +234,9 @@ int ptz_get_configuration_options()
     sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
     sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
 
-    long size = cat(NULL, "ptz_service_files/GetConfigurationOptions.xml", 12,
+    char *template = ptz_supports_zoom() ? "ptz_service_files/GetConfigurationOptions.xml" : "ptz_service_files/GetConfigurationOptions_nozoom.xml";
+
+    long size = cat(NULL, template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -220,7 +246,7 @@ int ptz_get_configuration_options()
 
     output_http_headers(size);
 
-    return cat("stdout", "ptz_service_files/GetConfigurationOptions.xml", 12,
+    return cat("stdout", template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -245,7 +271,9 @@ int ptz_get_nodes()
     sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
     sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
 
-    long size = cat(NULL, "ptz_service_files/GetNodes.xml", 12,
+    char *template = ptz_supports_zoom() ? "ptz_service_files/GetNodes.xml" : "ptz_service_files/GetNodes_nozoom.xml";
+
+    long size = cat(NULL, template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -255,7 +283,7 @@ int ptz_get_nodes()
 
     output_http_headers(size);
 
-    return cat("stdout", "ptz_service_files/GetNodes.xml", 12,
+    return cat("stdout", template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -286,7 +314,9 @@ int ptz_get_node()
         return -1;
     }
 
-    long size = cat(NULL, "ptz_service_files/GetNode.xml", 12,
+    char *template = ptz_supports_zoom() ? "ptz_service_files/GetNode.xml" : "ptz_service_files/GetNode_nozoom.xml";
+
+    long size = cat(NULL, template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -296,7 +326,7 @@ int ptz_get_node()
 
     output_http_headers(size);
 
-    return cat("stdout", "ptz_service_files/GetNode.xml", 12,
+    return cat("stdout", template, 12,
             "%MIN_X%", min_x,
             "%MAX_X%", max_x,
             "%MIN_Y%", min_y,
@@ -903,7 +933,9 @@ int ptz_get_status()
         else
             strcpy(si, "IDLE");
 
-        long size = cat(NULL, "ptz_service_files/GetStatus.xml", 12,
+        char *template = ptz_supports_zoom() ? "ptz_service_files/GetStatus.xml" : "ptz_service_files/GetStatus_nozoom.xml";
+
+        long size = cat(NULL, template, 12,
                 "%X%", sx,
                 "%Y%", sy,
                 "%Z%", sz,
@@ -913,7 +945,7 @@ int ptz_get_status()
 
         output_http_headers(size);
 
-        return cat("stdout", "ptz_service_files/GetStatus.xml", 12,
+        return cat("stdout", template, 12,
                 "%X%", sx,
                 "%Y%", sy,
                 "%Z%", sz,
