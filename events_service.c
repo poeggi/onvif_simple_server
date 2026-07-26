@@ -47,14 +47,14 @@ int events_get_service_capabilities()
     char ebasesubscription[8], epullpoint[8], emaxpullpoints[4];
 
     if ((service_ctx.events_enable == EVENTS_PULLPOINT) || (service_ctx.events_enable == EVENTS_BOTH)) {
-        strcpy(epullpoint, "true");
+        snprintf(epullpoint, sizeof(epullpoint), "%s", "true");
     } else {
-        strcpy(epullpoint, "false");
+        snprintf(epullpoint, sizeof(epullpoint), "%s", "false");
     }
     if ((service_ctx.events_enable == EVENTS_BASESUBSCRIPTION) || (service_ctx.events_enable == EVENTS_BOTH)) {
-        strcpy(ebasesubscription, "true");
+        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "true");
     } else {
-        strcpy(ebasesubscription, "false");
+        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "false");
     }
     snprintf(emaxpullpoints, sizeof(emaxpullpoints), "%d", MAX_SUBSCRIPTIONS);
 
@@ -90,7 +90,7 @@ int events_create_pull_point_subscription()
 
     my_port[0] = '\0';
     if (service_ctx.port != 80)
-        sprintf(my_port, ":%d", service_ctx.port);
+        snprintf(my_port, sizeof(my_port), ":%d", service_ctx.port);
 
     // TopicExpression filter is supported
     element = get_element("Filter", "Body");
@@ -140,7 +140,7 @@ int events_create_pull_point_subscription()
             subs_evts->subscriptions[i].topic_expression[0] = '\0';
             if ((te != NULL) && (te[0] != '\0')) {
                 if (strlen(te) < sizeof(subs_evts->subscriptions[i].topic_expression) - 1) {
-                    strcpy(subs_evts->subscriptions[i].topic_expression, te);
+                    snprintf(subs_evts->subscriptions[i].topic_expression, sizeof(subs_evts->subscriptions[i].topic_expression), "%s", te);
                 }
             }
             break;
@@ -168,7 +168,7 @@ int events_create_pull_point_subscription()
     sem_memory_post();
     destroy_shared_memory((void *) subs_evts, 0);
 
-    sprintf(events_service_address, "http://%s%s/onvif/events_service?sub=%d", service_ctx.address_url, my_port, subscription_id);
+    snprintf(events_service_address, sizeof(events_service_address), "http://%s%s/onvif/events_service?sub=%d", service_ctx.address_url, my_port, subscription_id);
 
     to_iso_date(iso_str, sizeof(iso_str), now);
     to_iso_date(iso_str_2, sizeof(iso_str_2), expire_time);
@@ -367,29 +367,29 @@ int events_pull_messages()
                 break;
             if ((subs_evts->events[i].pull_notify & (1 << sub_index))) {
                 if ((subs_evts->events[i].pull_send_initialized & (1 << sub_index))) {
-                    strcpy(property, "Initialized");
+                    snprintf(property, sizeof(property), "%s", "Initialized");
                     to_iso_date(iso_str_3, sizeof(iso_str_3), now);
                 } else {
-                    strcpy(property, "Changed");
+                    snprintf(property, sizeof(property), "%s", "Changed");
                     to_iso_date(iso_str_3, sizeof(iso_str_3), subs_evts->events[i].e_time);
                 }
                 if (subs_evts->events[i].is_on) {
                     if ((service_ctx.events[i].topic != NULL) && (strcmp("tns1:Device/Trigger/Relay", service_ctx.events[i].topic) == 0)) {
-                        strcpy(data_value, "active");
+                        snprintf(data_value, sizeof(data_value), "%s", "active");
                     } else {
-                        strcpy(data_value, "true");
+                        snprintf(data_value, sizeof(data_value), "%s", "true");
                     }
                 } else {
                     if ((service_ctx.events[i].topic != NULL) && (strcmp("tns1:Device/Trigger/Relay", service_ctx.events[i].topic) == 0)) {
-                        strcpy(data_value, "inactive");
+                        snprintf(data_value, sizeof(data_value), "%s", "inactive");
                     } else {
-                        strcpy(data_value, "false");
+                        snprintf(data_value, sizeof(data_value), "%s", "false");
                     }
                 }
                 if ((service_ctx.events[i].topic != NULL) && (strcmp("tns1:Device/Trigger/Relay", service_ctx.events[i].topic) == 0)) {
-                    strcpy(data_name, "LogicalState");
+                    snprintf(data_name, sizeof(data_name), "%s", "LogicalState");
                 } else {
-                    strcpy(data_name, "State");
+                    snprintf(data_name, sizeof(data_name), "%s", "State");
                 }
                 size = cat(dest, "events_service_files/PullMessages_2.xml", 14,
                     "%TOPIC%", service_ctx.events[i].topic,
@@ -441,7 +441,7 @@ int events_subscribe()
 
     my_port[0] = '\0';
     if (service_ctx.port != 80)
-        sprintf(my_port, ":%d", service_ctx.port);
+        snprintf(my_port, sizeof(my_port), ":%d", service_ctx.port);
 
     address = get_element("Address", "Body");
     if (address == NULL) {
@@ -533,7 +533,7 @@ int events_subscribe()
             subs_evts->subscriptions[i].topic_expression[0] = '\0';
             if ((te != NULL) && (te[0] != '\0')) {
                 if (strlen(te) < sizeof(subs_evts->subscriptions[i].topic_expression) - 1) {
-                    strcpy(subs_evts->subscriptions[i].topic_expression, te);
+                    snprintf(subs_evts->subscriptions[i].topic_expression, sizeof(subs_evts->subscriptions[i].topic_expression), "%s", te);
                 }
             }
             break;
@@ -553,7 +553,7 @@ int events_subscribe()
     sem_memory_post();
     destroy_shared_memory((void *) subs_evts, 0);
 
-    sprintf(events_service_address, "http://%s%s/onvif/events_service?sub=%d", service_ctx.address_url, my_port, subscription_id);
+    snprintf(events_service_address, sizeof(events_service_address), "http://%s%s/onvif/events_service?sub=%d", service_ctx.address_url, my_port, subscription_id);
 
     gen_uuid(msg_uuid);
 
@@ -732,20 +732,20 @@ int events_get_event_properties()
             topic_le[0][0] = '\0';
             topic_le[1][0] = '\0';
             topic_le[2][0] = '\0';
-            strcpy(topic, service_ctx.events[i].topic);
+            snprintf(topic, sizeof(topic), "%s", service_ctx.events[i].topic);
             token = strtok(topic, "/");
 
             /* walk through other tokens */
             for (j = 0; j < 3; j++) {
-                sprintf(topic_ls[j], "<%s", token);
-                sprintf(topic_le[j], "</%s>", token);
+                snprintf(topic_ls[j], sizeof(topic_ls[j]), "<%s", token);
+                snprintf(topic_le[j], sizeof(topic_le[j]), "</%s>", token);
 
                 token = strtok(NULL, "/");
                 if (token == NULL) {
-                    strcat(topic_ls[j], "  wstop:topic=\"true\">");
+                    snprintf(topic_ls[j] + strlen(topic_ls[j]), sizeof(topic_ls[j]) - strlen(topic_ls[j]), "%s", "  wstop:topic=\"true\">");
                     break;
                 } else {
-                    strcat(topic_ls[j], ">");
+                    snprintf(topic_ls[j] + strlen(topic_ls[j]), sizeof(topic_ls[j]) - strlen(topic_ls[j]), "%s", ">");
                 }
             }
             if ((c == 0) && (j == 3) && (token != NULL)) {
@@ -755,11 +755,11 @@ int events_get_event_properties()
             }
 
             if (strcmp("tns1:Device/Trigger/Relay", service_ctx.events[i].topic) == 0) {
-                strcpy(data_name, "LogicalState");
-                strcpy(data_type, "tt:RelayLogicalState");
+                snprintf(data_name, sizeof(data_name), "%s", "LogicalState");
+                snprintf(data_type, sizeof(data_type), "%s", "tt:RelayLogicalState");
             } else {
-                strcpy(data_name, "State");
-                strcpy(data_type, "xsd:boolean");
+                snprintf(data_name, sizeof(data_name), "%s", "State");
+                snprintf(data_type, sizeof(data_type), "%s", "xsd:boolean");
             }
 
             size = cat(dest, "events_service_files/GetEventProperties_2.xml", 20,
@@ -933,9 +933,8 @@ int events_set_synchronization_point()
 
 int events_unsupported(const char *method)
 {
-    if (service_ctx.adv_fault_if_unknown == 1)
-        send_action_failed_fault("events_service", -1);
-    else
-        send_empty_response("tev", (char *) method);
-    return -1;
+    /* An unimplemented action must return a SOAP fault, not an empty 200
+     * response (ONVIF: env:Receiver / ter:ActionNotSupported). */
+    (void) method;
+    return send_action_not_supported_fault("events_service");
 }

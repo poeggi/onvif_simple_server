@@ -101,7 +101,7 @@ static int detect_outbound_address(char *addr_str)
 
     memset(&dst, 0, sizeof(dst));
     dst.sin_family      = AF_INET;
-    dst.sin_addr.s_addr = inet_addr(MULTICAST_ADDRESS);
+    inet_pton(AF_INET, MULTICAST_ADDRESS, &dst.sin_addr);
     dst.sin_port        = htons(PORT);
 
     if (connect(fd, (struct sockaddr *)&dst, sizeof(dst)) < 0) { close(fd); return -1; }
@@ -162,7 +162,7 @@ int create_pid(char *file_name)
     f = fopen(file_name, "w");
     if(!f) return -1;
     memset(buf, '\0', PID_SIZE);
-    sprintf(buf, "%ld\n", (long) getpid());
+    snprintf(buf, sizeof(buf), "%ld\n", (long) getpid());
     if(fwrite(buf, strlen(buf), 1, f) != 1) { fclose(f); return -2; }
     fclose(f);
     return 0;
@@ -184,10 +184,10 @@ static void send_bye(int s, const struct sockaddr *dst, socklen_t dst_len,
     long size;
 
     msg_number++;
-    sprintf(s_tmp, "%d", msg_number);
+    snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
     gen_uuid(msg_uuid);
 
-    sprintf(template_file, "%s/Bye.xml", template_dir);
+    snprintf(template_file, sizeof(template_file), "%s/Bye.xml", template_dir);
     size = cat(NULL, template_file, 12,
                "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
                "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr_str);
@@ -259,7 +259,7 @@ static void handle_probe(int s, struct sockaddr *dst, socklen_t dst_len,
     log_debug("Probe message");
 
     msg_number++;
-    sprintf(s_tmp, "%d", msg_number);
+    snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
     gen_uuid(msg_uuid);
 
     relates_to_uuid = get_element("MessageID", "Header");
@@ -267,7 +267,7 @@ static void handle_probe(int s, struct sockaddr *dst, socklen_t dst_len,
     close_xml();
 
     log_info("Sending ProbeMatches message.");
-    sprintf(template_file, "%s/ProbeMatches.xml", template_dir);
+    snprintf(template_file, sizeof(template_file), "%s/ProbeMatches.xml", template_dir);
     size = cat(NULL, template_file, 14,
                "%MSG_UUID%", msg_uuid, "%REL_TO_UUID%", relates_to_uuid,
                "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
@@ -303,9 +303,9 @@ int main(int argc, char **argv)
     char recv_buffer[RECV_BUFFER_LEN];
 
     if_name = pid_file = xaddr_s = NULL;
-    strcpy(model, "MODEL_NAME");
-    strcpy(hardware, "HARDWARE_MANUFACTURER");
-    strcpy(template_dir, DEFAULT_TEMPLATE_DIR);
+    snprintf(model, sizeof(model), "%s", "MODEL_NAME");
+    snprintf(hardware, sizeof(hardware), "%s", "HARDWARE_MANUFACTURER");
+    snprintf(template_dir, sizeof(template_dir), "%s", DEFAULT_TEMPLATE_DIR);
     foreground = 0;
     debug = 5;
     sock = -1;
@@ -333,16 +333,16 @@ int main(int argc, char **argv)
         case 'x': xaddr_s  = optarg; break;
 
         case 'm':
-            if (strlen(optarg) < sizeof(model)) strcpy(model, optarg);
+            if (strlen(optarg) < sizeof(model)) snprintf(model, sizeof(model), "%s", optarg);
             else { print_usage(argv[0]); exit(EXIT_FAILURE); }
             break;
         case 'n':
-            if (strlen(optarg) < sizeof(hardware)) strcpy(hardware, optarg);
+            if (strlen(optarg) < sizeof(hardware)) snprintf(hardware, sizeof(hardware), "%s", optarg);
             else { print_usage(argv[0]); exit(EXIT_FAILURE); }
             break;
         case 'p': pid_file = optarg; break;
         case 't':
-            if (strlen(optarg) < sizeof(template_dir)) strcpy(template_dir, optarg);
+            if (strlen(optarg) < sizeof(template_dir)) snprintf(template_dir, sizeof(template_dir), "%s", optarg);
             else { print_usage(argv[0]); exit(EXIT_FAILURE); }
             break;
         case 'f': foreground = 1; break;
@@ -517,7 +517,7 @@ int main(int argc, char **argv)
         if (have_v4) {
             struct ip_mreq mreq4;
             memset(&mreq4, 0, sizeof(mreq4));
-            mreq4.imr_multiaddr.s_addr = inet_addr(MULTICAST_ADDRESS);
+            inet_pton(AF_INET, MULTICAST_ADDRESS, &mreq4.imr_multiaddr);
             mreq4.imr_interface.s_addr = INADDR_ANY;
             if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq4, sizeof(mreq4)) < 0) {
                 log_fatal("Error joining IPv4 multicast group: %s", strerror(errno));
@@ -535,7 +535,7 @@ int main(int argc, char **argv)
         } else {
             struct sockaddr_in *m = (struct sockaddr_in *)&addr_mcast4;
             m->sin_family = AF_INET; m->sin_port = htons(PORT);
-            m->sin_addr.s_addr = inet_addr(MULTICAST_ADDRESS);
+            inet_pton(AF_INET, MULTICAST_ADDRESS, &m->sin_addr);
             addr_mcast4_len = sizeof(struct sockaddr_in);
         }
     }
@@ -563,15 +563,15 @@ int main(int argc, char **argv)
     }
 
     /* ---- Build xaddr strings ------------------------------------------- */
-    if (have_v4) sprintf(xaddr, xaddr_s, address);
+    if (have_v4) snprintf(xaddr, sizeof(xaddr), xaddr_s, address);
 
     /* ---- Send Hello ---------------------------------------------------- */
     msg_number = 1;
-    sprintf(s_tmp, "%d", msg_number);
+    snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
     gen_uuid(msg_uuid);
 
     if (have_v4) {
-        sprintf(template_file, "%s/Hello.xml", template_dir);
+        snprintf(template_file, sizeof(template_file), "%s/Hello.xml", template_dir);
         size = cat(NULL, template_file, 12,
                    "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
                    "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr);
@@ -593,9 +593,9 @@ int main(int argc, char **argv)
 
     if (xaddr6[0]) {
         msg_number++;
-        sprintf(s_tmp, "%d", msg_number);
+        snprintf(s_tmp, sizeof(s_tmp), "%d", msg_number);
         gen_uuid(msg_uuid);
-        sprintf(template_file, "%s/Hello.xml", template_dir);
+        snprintf(template_file, sizeof(template_file), "%s/Hello.xml", template_dir);
         size = cat(NULL, template_file, 12,
                    "%MSG_UUID%", msg_uuid, "%MSG_NUMBER%", s_tmp, "%UUID%", uuid,
                    "%HARDWARE%", hardware, "%NAME%", model, "%ADDRESS%", xaddr6);

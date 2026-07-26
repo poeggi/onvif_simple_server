@@ -29,7 +29,7 @@ int send_empty_response(char *ns, char *method)
 {
     int ret;
     char *response = (char *) malloc(strlen(ns) + strlen(method) + 10);
-    sprintf(response, "%s:%sResponse", ns, method);
+    snprintf(response, strlen(ns) + strlen(method) + 10, "%s:%sResponse", ns, method);
 
     long size = cat(NULL, "generic_files/Empty.xml", 2,
             "%METHOD%", response);
@@ -54,9 +54,9 @@ int send_fault(char *service, char *rec_send, char *subcode, char *subcode_ex, c
 
     port[0] = '\0';
     if (service_ctx.port != 80)
-        sprintf(port, ":%d", service_ctx.port);
-    sprintf(device_address, "http://%s%s/onvif", service_ctx.address_url, port);
-    sprintf(service_address, "http://%s%s/onvif/%s", service_ctx.address_url, port, service);
+        snprintf(port, sizeof(port), ":%d", service_ctx.port);
+    snprintf(device_address, sizeof(device_address), "http://%s%s/onvif", service_ctx.address_url, port);
+    snprintf(service_address, sizeof(service_address), "http://%s%s/onvif/%s", service_ctx.address_url, port, service);
 
     gen_uuid(msg_uuid);
 
@@ -106,8 +106,15 @@ int send_pull_messages_fault(char *timeout, char *message_limit)
 int send_action_failed_fault(char *service, int code)
 {
     char error_string[1024];
-    sprintf(error_string, "The requested SOAP action failed: error %d", code);
-    send_fault(service, "Receiver", "ter:Action", "ter:ActionFailed", "Action failed", error_string);
+    snprintf(error_string, sizeof(error_string), "The requested SOAP action failed: error %d", code);
+    return send_fault(service, "Receiver", "ter:Action", "ter:ActionFailed", "Action failed", error_string);
+}
+
+int send_action_not_supported_fault(char *service)
+{
+    return send_fault(service, "Receiver", "ter:ActionNotSupported", "ter:NotSupported",
+            "Optional Action Not Implemented",
+            "The requested action is not implemented by the device.");
 }
 
 int send_authentication_error()

@@ -41,9 +41,9 @@ int media_get_video_sources()
     // Get the video source from the 1st profile
     char stmp_w[16], stmp_h[16], stmp_fps[8];
 
-    sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-    sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
-    sprintf(stmp_fps, "%d", service_ctx.profiles[0].framerate);
+    snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+    snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+    snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[0].framerate);
     long size = cat(NULL, "media_service_files/GetVideoSources.xml", 6,
             "%WIDTH%", stmp_w,
             "%HEIGHT%", stmp_h,
@@ -61,9 +61,9 @@ int media_get_video_source_configurations()
 {
     char profiles_num[2], stmp_w[16], stmp_h[16];
 
-    sprintf(profiles_num, "%d", service_ctx.profiles_num);
-    sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-    sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
+    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+    snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+    snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
     long size = cat(NULL, "media_service_files/GetVideoSourceConfigurations.xml", 6,
             "%PROFILES_NUM%", profiles_num,
             "%WIDTH%", stmp_w,
@@ -89,9 +89,9 @@ int media_get_video_source_configuration()
 
     if (strncasecmp("VideoSourceConfigToken", configuration_token, 22) == 0) {
 
-        sprintf(profiles_num, "%d", service_ctx.profiles_num);
-        sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
+        snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
         long size = cat(NULL, "media_service_files/GetVideoSourceConfiguration.xml", 6,
                 "%PROFILES_NUM%", profiles_num,
                 "%WIDTH%", stmp_w,
@@ -117,9 +117,9 @@ int media_get_compatible_video_source_configurations()
     char profiles_num[2];
     char stmp_w[16], stmp_h[16];
 
-    sprintf(profiles_num, "%d", service_ctx.profiles_num);
-    sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-    sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
+    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+    snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+    snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
     long size = cat(NULL, "media_service_files/GetCompatibleVideoSourceConfigurations.xml", 8,
             "%PROFILES_NUM%", profiles_num,
             "%WIDTH%", stmp_w,
@@ -156,8 +156,8 @@ int media_get_video_source_configuration_options()
             (strcasecmp(service_ctx.profiles[1].name, token) == 0) ||
             (strcasecmp("VideoSourceConfigToken", token) == 0)) {
 
-        sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
         long size = cat(NULL, "media_service_files/GetVideoSourceConfigurationOptions.xml", 4,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h);
@@ -188,13 +188,13 @@ int media_get_profiles()
 
     audio_enc_h[0] = '\0';
     audio_enc_l[0] = '\0';
-    sprintf(profiles_num, "%d", service_ctx.profiles_num);
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     if (service_ctx.profiles_num == 1) {
 
@@ -211,8 +211,8 @@ int media_get_profiles()
                     "%PROFILE0%", service_ctx.profiles[0].name);
 
             // Get the video source configuration from the 1st profile
-            sprintf(stmp_vsc_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_vsc_h, "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_vsc_w, sizeof(stmp_vsc_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_vsc_h, sizeof(stmp_vsc_h), "%d", service_ctx.profiles[0].height);
             size += cat(dest, "media_service_files/GetProfile_VSC.xml", 6,
                     "%PROFILES_NUM%", profiles_num,
                     "%VSC_WIDTH%", stmp_vsc_w,
@@ -223,9 +223,9 @@ int media_get_profiles()
                         "%PROFILES_NUM%", profiles_num);
             }
 
-            sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
-            sprintf(stmp_br, "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
+            snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
             size += cat(dest, "media_service_files/GetProfile_VEC.xml", 12,
                     "%PROFILE%", service_ctx.profiles[0].name,
                     "%WIDTH%", stmp_w,
@@ -269,8 +269,8 @@ int media_get_profiles()
                     "%PROFILE0%", service_ctx.profiles[0].name);
 
             // Get the video source configuration from the 1st profile
-            sprintf(stmp_vsc_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_vsc_h, "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_vsc_w, sizeof(stmp_vsc_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_vsc_h, sizeof(stmp_vsc_h), "%d", service_ctx.profiles[0].height);
             size += cat(dest, "media_service_files/GetProfile_VSC.xml", 6,
                     "%PROFILES_NUM%", profiles_num,
                     "%VSC_WIDTH%", stmp_vsc_w,
@@ -281,9 +281,9 @@ int media_get_profiles()
                         "%PROFILES_NUM%", profiles_num);
             }
 
-            sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
-            sprintf(stmp_br, "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
+            snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
             size += cat(dest, "media_service_files/GetProfile_VEC.xml", 12,
                     "%PROFILE%", service_ctx.profiles[0].name,
                     "%WIDTH%", stmp_w,
@@ -314,8 +314,8 @@ int media_get_profiles()
                     "%PROFILE1%", service_ctx.profiles[1].name);
 
             // Get the video source configuration from the 1st profile
-            sprintf(stmp_vsc_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_vsc_h, "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_vsc_w, sizeof(stmp_vsc_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_vsc_h, sizeof(stmp_vsc_h), "%d", service_ctx.profiles[0].height);
             size += cat(dest, "media_service_files/GetProfile_VSC.xml", 6,
                     "%PROFILES_NUM%", profiles_num,
                     "%VSC_WIDTH%", stmp_vsc_w,
@@ -327,9 +327,9 @@ int media_get_profiles()
                         "%PROFILES_NUM%", profiles_num);
             }
 
-            sprintf(stmp_w, "%d", service_ctx.profiles[1].width);
-            sprintf(stmp_h, "%d", service_ctx.profiles[1].height);
-            sprintf(stmp_br, "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
+            snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[1].width);
+            snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[1].height);
+            snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
             size += cat(dest, "media_service_files/GetProfile_VEC.xml", 12,
                     "%PROFILE%", service_ctx.profiles[1].name,
                     "%WIDTH%", stmp_w,
@@ -386,13 +386,13 @@ int media_get_profile()
         return -1;
     }
 
-    sprintf(profiles_num, "%d", service_ctx.profiles_num);
-    sprintf(min_x, "%.1f", service_ctx.ptz_node.min_step_x);
-    sprintf(max_x, "%.1f", service_ctx.ptz_node.max_step_x);
-    sprintf(min_y, "%.1f", service_ctx.ptz_node.min_step_y);
-    sprintf(max_y, "%.1f", service_ctx.ptz_node.max_step_y);
-    sprintf(min_z, "%.1f", service_ctx.ptz_node.min_step_z);
-    sprintf(max_z, "%.1f", service_ctx.ptz_node.max_step_z);
+    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
+    snprintf(min_x, sizeof(min_x), "%.1f", service_ctx.ptz_node.min_step_x);
+    snprintf(max_x, sizeof(max_x), "%.1f", service_ctx.ptz_node.max_step_x);
+    snprintf(min_y, sizeof(min_y), "%.1f", service_ctx.ptz_node.min_step_y);
+    snprintf(max_y, sizeof(max_y), "%.1f", service_ctx.ptz_node.max_step_y);
+    snprintf(min_z, sizeof(min_z), "%.1f", service_ctx.ptz_node.min_step_z);
+    snprintf(max_z, sizeof(max_z), "%.1f", service_ctx.ptz_node.max_step_z);
 
     if ((service_ctx.profiles_num > 0) &&
             (strcasecmp(service_ctx.profiles[0].name, profile_token) == 0)) {
@@ -410,8 +410,8 @@ int media_get_profile()
                     "%PROFILE%", profile_token);
 
             // Get the video source configuration from the 1st profile
-            sprintf(stmp_vsc_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_vsc_h, "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_vsc_w, sizeof(stmp_vsc_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_vsc_h, sizeof(stmp_vsc_h), "%d", service_ctx.profiles[0].height);
             size += cat(dest, "media_service_files/GetProfile_VSC.xml", 6,
                     "%PROFILES_NUM%", profiles_num,
                     "%VSC_WIDTH%", stmp_vsc_w,
@@ -422,9 +422,9 @@ int media_get_profile()
                         "%PROFILES_NUM%", profiles_num);
             }
 
-            sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
-            sprintf(stmp_br, "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
+            snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
             size += cat(dest, "media_service_files/GetProfile_VEC.xml", 12,
                     "%PROFILE%", profile_token,
                     "%WIDTH%", stmp_w,
@@ -470,8 +470,8 @@ int media_get_profile()
                     "%PROFILE%", profile_token);
 
             // Get the video source configuration from the 1st profile
-            sprintf(stmp_vsc_w, "%d", service_ctx.profiles[0].width);
-            sprintf(stmp_vsc_h, "%d", service_ctx.profiles[0].height);
+            snprintf(stmp_vsc_w, sizeof(stmp_vsc_w), "%d", service_ctx.profiles[0].width);
+            snprintf(stmp_vsc_h, sizeof(stmp_vsc_h), "%d", service_ctx.profiles[0].height);
             size += cat(dest, "media_service_files/GetProfile_VSC.xml", 6,
                     "%PROFILES_NUM%", profiles_num,
                     "%VSC_WIDTH%", stmp_vsc_w,
@@ -482,9 +482,9 @@ int media_get_profile()
                         "%PROFILES_NUM%", profiles_num);
             }
 
-            sprintf(stmp_w, "%d", service_ctx.profiles[1].width);
-            sprintf(stmp_h, "%d", service_ctx.profiles[1].height);
-            sprintf(stmp_br, "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
+            snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[1].width);
+            snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[1].height);
+            snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
             size += cat(dest, "media_service_files/GetProfile_VEC.xml", 12,
                     "%PROFILE%", profile_token,
                     "%WIDTH%", stmp_w,
@@ -538,9 +538,9 @@ int media_get_video_encoder_configurations()
     char stmp_br_h[16], stmp_br_l[16];
 
     if (service_ctx.profiles_num == 1) {
-        sprintf(stmp_w_h, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h_h, "%d", service_ctx.profiles[0].height);
-        sprintf(stmp_br_h, "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
+        snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_br_h, sizeof(stmp_br_h), "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
         const char *enc_h = "H264";
         char *tmpl = "media_service_files/GetVideoEncoderConfigurations_high.xml";
         long size = cat(NULL, tmpl, 10,
@@ -560,12 +560,12 @@ int media_get_video_encoder_configurations()
                 "%ENCODING%", enc_h);
 
     } else if (service_ctx.profiles_num == 2) {
-        sprintf(stmp_w_h, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h_h, "%d", service_ctx.profiles[0].height);
-        sprintf(stmp_w_l, "%d", service_ctx.profiles[1].width);
-        sprintf(stmp_h_l, "%d", service_ctx.profiles[1].height);
-        sprintf(stmp_br_h, "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
-        sprintf(stmp_br_l, "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
+        snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_w_l, sizeof(stmp_w_l), "%d", service_ctx.profiles[1].width);
+        snprintf(stmp_h_l, sizeof(stmp_h_l), "%d", service_ctx.profiles[1].height);
+        snprintf(stmp_br_h, sizeof(stmp_br_h), "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
+        snprintf(stmp_br_l, sizeof(stmp_br_l), "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
         const char *enc_h = "H264";
         const char *enc_l = "H264";
         char *tmpl = "media_service_files/GetVideoEncoderConfigurations_both.xml";
@@ -613,9 +613,9 @@ int media_get_video_encoder_configuration()
     snprintf(vec_token, sizeof(vec_token), "%s_VideoEncoderToken", service_ctx.profiles[0].name);
     if (strcasecmp(configuration_token, vec_token) == 0) {
 
-        sprintf(stmp_w_h, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h_h, "%d", service_ctx.profiles[0].height);
-        sprintf(stmp_br, "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
+        snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[0].bitrate > 0 ? service_ctx.profiles[0].bitrate : 5000);
         const char *enc0 = "H264";
         char *tmpl = "media_service_files/GetVideoEncoderConfiguration.xml";
         long size = cat(NULL, tmpl, 12,
@@ -641,9 +641,9 @@ int media_get_video_encoder_configuration()
         snprintf(vec_token, sizeof(vec_token), "%s_VideoEncoderToken", service_ctx.profiles[1].name);
         if (strcasecmp(configuration_token, vec_token) == 0) {
 
-            sprintf(stmp_w_l, "%d", service_ctx.profiles[1].width);
-            sprintf(stmp_h_l, "%d", service_ctx.profiles[1].height);
-            sprintf(stmp_br, "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
+            snprintf(stmp_w_l, sizeof(stmp_w_l), "%d", service_ctx.profiles[1].width);
+            snprintf(stmp_h_l, sizeof(stmp_h_l), "%d", service_ctx.profiles[1].height);
+            snprintf(stmp_br, sizeof(stmp_br), "%d", service_ctx.profiles[1].bitrate > 0 ? service_ctx.profiles[1].bitrate : 5000);
             const char *enc1 = "H264";
             char *tmpl = "media_service_files/GetVideoEncoderConfiguration.xml";
             long size = cat(NULL, tmpl, 12,
@@ -682,8 +682,8 @@ int media_get_compatible_video_encoder_configurations()
 
     if (strcasecmp(service_ctx.profiles[0].name, profile_token) == 0) {
 
-        sprintf(stmp_w_h, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h_h, "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
         const char *cenc0 = "H264";
         char *tmpl = "media_service_files/GetCompatibleVideoEncoderConfigurations.xml";
         long size = cat(NULL, tmpl, 10,
@@ -705,8 +705,8 @@ int media_get_compatible_video_encoder_configurations()
     } else if ((service_ctx.profiles_num == 2) &&
             (strcasecmp(service_ctx.profiles[1].name, profile_token) == 0)) {
 
-        sprintf(stmp_w_l, "%d", service_ctx.profiles[1].width);
-        sprintf(stmp_h_l, "%d", service_ctx.profiles[1].height);
+        snprintf(stmp_w_l, sizeof(stmp_w_l), "%d", service_ctx.profiles[1].width);
+        snprintf(stmp_h_l, sizeof(stmp_h_l), "%d", service_ctx.profiles[1].height);
         const char *cenc1 = "H264";
         char *tmpl = "media_service_files/GetCompatibleVideoEncoderConfigurations.xml";
         long size = cat(NULL, tmpl, 10,
@@ -756,8 +756,8 @@ int media_get_video_encoder_configuration_options()
 
     if ((service_ctx.profiles_num > 0) && profile_idx == 0) {
 
-        sprintf(stmp_w, "%d", service_ctx.profiles[0].width);
-        sprintf(stmp_h, "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
         long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 6,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
@@ -772,8 +772,8 @@ int media_get_video_encoder_configuration_options()
 
     } else if ((service_ctx.profiles_num == 2) && profile_idx == 1) {
 
-        sprintf(stmp_w, "%d", service_ctx.profiles[1].width);
-        sprintf(stmp_h, "%d", service_ctx.profiles[1].height);
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[1].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[1].height);
         long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 6,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
@@ -798,7 +798,7 @@ int media_get_guaranteed_number_of_video_encoder_instances()
     const char *configuration_token = get_element("ConfigurationToken", "Body");
 
     if ((service_ctx.profiles_num >= 0) && (service_ctx.profiles_num <= 2)) {
-        sprintf(stmp, "%d", service_ctx.profiles_num);
+        snprintf(stmp, sizeof(stmp), "%d", service_ctx.profiles_num);
     } else {
         send_action_failed_fault("media_service", -1);
         return -1;
@@ -842,8 +842,8 @@ int media_get_snapshot_uri()
             return -2;
         }
 
-        if (sprintf(line, service_ctx.profiles[0].snapurl, service_ctx.address_url) < 0) {
-            strcpy(line, service_ctx.profiles[0].snapurl);
+        if (snprintf(line, sizeof(line), service_ctx.profiles[0].snapurl, service_ctx.address_url) < 0) {
+            snprintf(line, sizeof(line), "%s", service_ctx.profiles[0].snapurl);
         }
         // Escape html chars
         html_escape(line, MAX_LEN);
@@ -864,8 +864,8 @@ int media_get_snapshot_uri()
             return -3;
         }
 
-        if (sprintf(line, service_ctx.profiles[1].snapurl, service_ctx.address_url) < 0) {
-            strcpy(line, service_ctx.profiles[1].snapurl);
+        if (snprintf(line, sizeof(line), service_ctx.profiles[1].snapurl, service_ctx.address_url) < 0) {
+            snprintf(line, sizeof(line), "%s", service_ctx.profiles[1].snapurl);
         }
         // Escape html chars
         html_escape(line, MAX_LEN);
@@ -904,8 +904,8 @@ int media_get_stream_uri()
             return -2;
         }
 
-        if (sprintf(line, service_ctx.profiles[0].url, service_ctx.address_url) < 0) {
-            strcpy(line, service_ctx.profiles[0].url);
+        if (snprintf(line, sizeof(line), service_ctx.profiles[0].url, service_ctx.address_url) < 0) {
+            snprintf(line, sizeof(line), "%s", service_ctx.profiles[0].url);
         }
         // Escape html chars
         html_escape(line, MAX_LEN);
@@ -926,8 +926,8 @@ int media_get_stream_uri()
             return -3;
         }
 
-        if (sprintf(line, service_ctx.profiles[1].url, service_ctx.address_url) < 0) {
-            strcpy(line, service_ctx.profiles[1].url);
+        if (snprintf(line, sizeof(line), service_ctx.profiles[1].url, service_ctx.address_url) < 0) {
+            snprintf(line, sizeof(line), "%s", service_ctx.profiles[1].url);
         }
         // Escape html chars
         html_escape(line, MAX_LEN);
@@ -980,7 +980,7 @@ int media_get_audio_source_configurations()
         }
     }
 
-    sprintf(s_profiles_num, "%d", service_ctx.profiles_num);
+    snprintf(s_profiles_num, sizeof(s_profiles_num), "%d", service_ctx.profiles_num);
 
     if (profiles_num > 0) {
         long size = cat(NULL, "media_service_files/GetAudioSourceConfigurations.xml", 2,
@@ -1024,7 +1024,7 @@ int media_get_audio_source_configuration()
             }
         }
 
-        sprintf(s_profiles_num, "%d", service_ctx.profiles_num);
+        snprintf(s_profiles_num, sizeof(s_profiles_num), "%d", service_ctx.profiles_num);
 
         if (profiles_num > 0) {
             long size = cat(NULL, "media_service_files/GetAudioSourceConfiguration.xml", 2,
@@ -1258,11 +1258,11 @@ int media_get_audio_encoder_configuration_options()
         if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) && (service_ctx.profiles[0].audio_encoder != G726)) {
             set_audio_codec(audio_encoder, 16, service_ctx.profiles[0].audio_encoder, 1);
             if (service_ctx.profiles[0].audio_encoder == G711) {
-                sprintf(bitrate, "%d", 64);
-                sprintf(samplerate, "%d", 8);
+                snprintf(bitrate, sizeof(bitrate), "%d", 64);
+                snprintf(samplerate, sizeof(samplerate), "%d", 8);
             } else if (service_ctx.profiles[0].audio_encoder == AAC) {
-                sprintf(bitrate, "%d", 50);
-                sprintf(samplerate, "%d", 16);
+                snprintf(bitrate, sizeof(bitrate), "%d", 50);
+                snprintf(samplerate, sizeof(samplerate), "%d", 16);
             }
         } else {
             send_fault("media_service", "Receiver", "ter:ActionNotSupported", "ter:AudioNotSupported", "AudioNotSupported", "The device does not support audio");
@@ -1272,11 +1272,11 @@ int media_get_audio_encoder_configuration_options()
         if ((service_ctx.profiles[1].audio_encoder != AUDIO_NONE) && (service_ctx.profiles[1].audio_encoder != G726)) {
             set_audio_codec(audio_encoder, 16, service_ctx.profiles[1].audio_encoder, 1);
             if (service_ctx.profiles[1].audio_encoder == G711) {
-                sprintf(bitrate, "%d", 64);
-                sprintf(samplerate, "%d", 8);
+                snprintf(bitrate, sizeof(bitrate), "%d", 64);
+                snprintf(samplerate, sizeof(samplerate), "%d", 8);
             } else if (service_ctx.profiles[1].audio_encoder == AAC) {
-                sprintf(bitrate, "%d", 50);
-                sprintf(samplerate, "%d", 16);
+                snprintf(bitrate, sizeof(bitrate), "%d", 50);
+                snprintf(samplerate, sizeof(samplerate), "%d", 16);
             }
         } else {
             send_fault("media_service", "Receiver", "ter:ActionNotSupported", "ter:AudioNotSupported", "AudioNotSupported", "The device does not support audio");
@@ -1432,11 +1432,11 @@ int media_get_audio_decoder_configuration_options()
 
         set_audio_codec(audio_decoder, 16, decoder_type, 1);
         if (decoder_type == G711) {
-            sprintf(bitrate, "%d", 64);
-            sprintf(samplerate, "%d", 8);
+            snprintf(bitrate, sizeof(bitrate), "%d", 64);
+            snprintf(samplerate, sizeof(samplerate), "%d", 8);
         } else if (decoder_type == AAC) {
-            sprintf(bitrate, "%d", 50);
-            sprintf(samplerate, "%d", 16);
+            snprintf(bitrate, sizeof(bitrate), "%d", 50);
+            snprintf(samplerate, sizeof(samplerate), "%d", 16);
         }
 
         long size = cat(NULL, "media_service_files/GetAudioDecoderConfigurationOptions.xml", 6,
@@ -1481,7 +1481,7 @@ int media_get_audio_output_configuration()
     if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
 
-        sprintf(profiles_num, "%d", service_ctx.profiles_num);
+        snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
 
         long size = cat(NULL, "media_service_files/GetAudioOutputConfiguration.xml", 2,
                 "%PROFILES_NUM%", profiles_num);
@@ -1503,7 +1503,7 @@ int media_get_audio_output_configurations()
     if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
 
-        sprintf(profiles_num, "%d", service_ctx.profiles_num);
+        snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
 
         long size = cat(NULL, "media_service_files/GetAudioOutputConfigurations.xml", 2,
                 "%PROFILES_NUM%", profiles_num);
@@ -1549,7 +1549,7 @@ int media_get_compatible_audio_source_configurations()
             (( service_ctx.profiles_num == 2) &&
             (strcasecmp(service_ctx.profiles[1].name, profile_token) == 0) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
 
-        sprintf(profiles_num, "%d", service_ctx.profiles_num);
+        snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
 
         long size = cat(NULL, "media_service_files/GetCompatibleAudioSourceConfigurations.xml", 2,
                 "%PROFILES_NUM%", profiles_num);
@@ -1672,7 +1672,7 @@ int media_get_compatible_audio_output_configurations()
     // Ignore the requested token
     char profiles_num[2];
 
-    sprintf(profiles_num, "%d", service_ctx.profiles_num);
+    snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
 
     if ((service_ctx.profiles[0].audio_decoder  != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder  != AUDIO_NONE))) {
@@ -1777,9 +1777,8 @@ int media_set_audio_output_configuration()
 
 int media_unsupported(const char *method)
 {
-    if (service_ctx.adv_fault_if_unknown == 1)
-        send_action_failed_fault("media_service", -1);
-    else
-        send_empty_response("trt", (char *) method);
-    return -1;
+    /* An unimplemented action must return a SOAP fault, not an empty 200
+     * response (ONVIF: env:Receiver / ter:ActionNotSupported). */
+    (void) method;
+    return send_action_not_supported_fault("media_service");
 }

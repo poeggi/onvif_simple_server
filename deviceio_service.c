@@ -43,20 +43,20 @@ int deviceio_get_service_capabilities()
 {
     char relay_outputs[2], audio_sources[2], audio_outputs[2];
 
-    sprintf(relay_outputs, "%d", service_ctx.relay_outputs_num);
+    snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
     if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
 
-        sprintf(audio_sources, "%d", 1);
+        snprintf(audio_sources, sizeof(audio_sources), "%d", 1);
     } else {
-        sprintf(audio_sources, "%d", 0);
+        snprintf(audio_sources, sizeof(audio_sources), "%d", 0);
     }
     if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
 
-        sprintf(audio_outputs, "%d", 1);
+        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 1);
     } else {
-        sprintf(audio_outputs, "%d", 0);
+        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 0);
     }
 
     long size = cat(NULL, "deviceio_service_files/GetServiceCapabilities.xml", 6,
@@ -79,9 +79,9 @@ int deviceio_get_audio_outputs()
     if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
 
-        sprintf(audio_output_token, "%s", "<tmd:Token>AudioOutputToken</tmd:Token>");
+        snprintf(audio_output_token, sizeof(audio_output_token), "%s", "<tmd:Token>AudioOutputToken</tmd:Token>");
     } else {
-        sprintf(audio_output_token, "%s", "");
+        snprintf(audio_output_token, sizeof(audio_output_token), "%s", "");
     }
 
     long size = cat(NULL, "deviceio_service_files/GetAudioOutputs.xml", 2,
@@ -100,9 +100,9 @@ int deviceio_get_audio_sources()
     if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
 
-        sprintf(audio_source_token, "%s", "<tmd:Token>AudioSourceToken</tmd:Token>");
+        snprintf(audio_source_token, sizeof(audio_source_token), "%s", "<tmd:Token>AudioSourceToken</tmd:Token>");
     } else {
-        sprintf(audio_source_token, "%s", "");
+        snprintf(audio_source_token, sizeof(audio_source_token), "%s", "");
     }
 
     long size = cat(NULL, "deviceio_service_files/GetAudioSources.xml", 2,
@@ -134,11 +134,11 @@ int deviceio_get_relay_outputs()
         size = cat(dest, "deviceio_service_files/GetRelayOutputs_header.xml", 0);
 
         for (i = 0; i < service_ctx.relay_outputs_num; i++) {
-            sprintf(token, "RelayOutputToken_%d", i);
+            snprintf(token, sizeof(token), "RelayOutputToken_%d", i);
             if (service_ctx.relay_outputs[i].idle_state == IDLE_STATE_OPEN)
-                strcpy(idle_state, "open");
+                snprintf(idle_state, sizeof(idle_state), "%s", "open");
             else
-                strcpy(idle_state, "close");
+                snprintf(idle_state, sizeof(idle_state), "%s", "close");
             size += cat(dest, "deviceio_service_files/GetRelayOutputs_item.xml", 4,
                     "%RELAY_OUTPUT_TOKEN%", token,
                     "%RELAY_IDLE_STATE%", idle_state);
@@ -173,11 +173,11 @@ int deviceio_get_relay_output_options()
 
         if (token == NULL) {
             for (i = 0; i < service_ctx.relay_outputs_num; i++) {
-                sprintf(stoken, "RelayOutputToken_%d", i);
+                snprintf(stoken, sizeof(stoken), "RelayOutputToken_%d", i);
                 if (service_ctx.relay_outputs[i].idle_state == IDLE_STATE_OPEN) {
-                    strcpy(idle_state, "open");
+                    snprintf(idle_state, sizeof(idle_state), "%s", "open");
                 } else {
-                    strcpy(idle_state, "close");
+                    snprintf(idle_state, sizeof(idle_state), "%s", "close");
                 }
                 size += cat(dest, "deviceio_service_files/GetRelayOutputOptions_item.xml", 2,
                         "%RELAY_OUTPUT_TOKEN%", stoken);
@@ -186,12 +186,12 @@ int deviceio_get_relay_output_options()
             itoken = token[17] - 48;
 
             if ((itoken >= 0) && (itoken < service_ctx.relay_outputs_num)) {
-                sprintf(stoken, "RelayOutputToken_%d", itoken);
+                snprintf(stoken, sizeof(stoken), "RelayOutputToken_%d", itoken);
 
                 if (service_ctx.relay_outputs[itoken].idle_state == IDLE_STATE_OPEN) {
-                    strcpy(idle_state, "open");
+                    snprintf(idle_state, sizeof(idle_state), "%s", "open");
                 } else {
-                    strcpy(idle_state, "close");
+                    snprintf(idle_state, sizeof(idle_state), "%s", "close");
                 }
                 size += cat(dest, "deviceio_service_files/GetRelayOutputOptions_item.xml", 2,
                         "%RELAY_OUTPUT_TOKEN%", stoken);
@@ -199,6 +199,7 @@ int deviceio_get_relay_output_options()
         }
         size += cat(dest, "deviceio_service_files/GetRelayOutputOptions_footer.xml", 0);
     }
+    return size;
 }
 
 int deviceio_set_relay_output_settings()
@@ -279,9 +280,8 @@ int deviceio_set_relay_output_state()
 
 int deviceio_unsupported(const char *method)
 {
-    if (service_ctx.adv_fault_if_unknown == 1)
-        send_action_failed_fault("deviceio_service", -1);
-    else
-        send_empty_response("tmd", (char *) method);
-    return -1;
+    /* An unimplemented action must return a SOAP fault, not an empty 200
+     * response (ONVIF: env:Receiver / ter:ActionNotSupported). */
+    (void) method;
+    return send_action_not_supported_fault("deviceio_service");
 }

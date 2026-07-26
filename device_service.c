@@ -48,41 +48,41 @@ int device_get_services()
 
     port[0] = '\0';
     if (service_ctx.port != 80)
-        sprintf(port, ":%d", service_ctx.port);
-    sprintf(device_service_address, "http://%s%s/onvif/device_service", service_ctx.address_url, port);
-    sprintf(media_service_address, "http://%s%s/onvif/media_service", service_ctx.address_url, port);
-    sprintf(media2_service_address, "http://%s%s/onvif/media2_service", service_ctx.address_url, port);
-    sprintf(ptz_service_address, "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
-    sprintf(events_service_address, "http://%s%s/onvif/events_service", service_ctx.address_url, port);
-    sprintf(deviceio_service_address, "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
+        snprintf(port, sizeof(port), ":%d", service_ctx.port);
+    snprintf(device_service_address, sizeof(device_service_address), "http://%s%s/onvif/device_service", service_ctx.address_url, port);
+    snprintf(media_service_address, sizeof(media_service_address), "http://%s%s/onvif/media_service", service_ctx.address_url, port);
+    snprintf(media2_service_address, sizeof(media2_service_address), "http://%s%s/onvif/media2_service", service_ctx.address_url, port);
+    snprintf(ptz_service_address, sizeof(ptz_service_address), "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
+    snprintf(events_service_address, sizeof(events_service_address), "http://%s%s/onvif/events_service", service_ctx.address_url, port);
+    snprintf(deviceio_service_address, sizeof(deviceio_service_address), "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
 
     if ((service_ctx.events_enable == EVENTS_PULLPOINT) || (service_ctx.events_enable == EVENTS_BOTH)) {
-        strcpy(epullpoint, "true");
+        snprintf(epullpoint, sizeof(epullpoint), "%s", "true");
     } else {
-        strcpy(epullpoint, "false");
+        snprintf(epullpoint, sizeof(epullpoint), "%s", "false");
     }
     if ((service_ctx.events_enable == EVENTS_BASESUBSCRIPTION) || (service_ctx.events_enable == EVENTS_BOTH)) {
-        strcpy(ebasesubscription, "true");
+        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "true");
     } else {
-        strcpy(ebasesubscription, "false");
+        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "false");
     }
 
     if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
 
-        sprintf(audio_sources, "%d", 1);
+        snprintf(audio_sources, sizeof(audio_sources), "%d", 1);
     } else {
-        sprintf(audio_sources, "%d", 0);
+        snprintf(audio_sources, sizeof(audio_sources), "%d", 0);
     }
     if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
 
-        sprintf(audio_outputs, "%d", 1);
+        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 1);
     } else {
-        sprintf(audio_outputs, "%d", 0);
+        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 0);
     }
 
-    sprintf(relay_outputs, "%d", service_ctx.relay_outputs_num);
+    snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
 
     cap = get_element("IncludeCapability", "Body");
     if ((cap != NULL) && (strcasecmp(cap, "true")) == 0) {
@@ -310,23 +310,23 @@ int device_get_system_date_and_time()
 
     /* UTC date/time for UTCDateTime element */
     tm = gmtime(&timestamp);
-    sprintf(hour,   "%d", tm->tm_hour);
-    sprintf(minute, "%d", tm->tm_min);
-    sprintf(second, "%d", tm->tm_sec);
-    sprintf(year,   "%d", tm->tm_year + 1900);
-    sprintf(month,  "%d", tm->tm_mon + 1);
-    sprintf(day,    "%d", tm->tm_mday);
+    snprintf(hour,   sizeof(hour),   "%d", tm->tm_hour);
+    snprintf(minute, sizeof(minute), "%d", tm->tm_min);
+    snprintf(second, sizeof(second), "%d", tm->tm_sec);
+    snprintf(year,   sizeof(year),   "%d", tm->tm_year + 1900);
+    snprintf(month,  sizeof(month),  "%d", tm->tm_mon + 1);
+    snprintf(day,    sizeof(day),    "%d", tm->tm_mday);
 
     /* Local date/time for DST flag, POSIX TZ string, and LocalDateTime element */
     tzset();
     tm = localtime(&timestamp);
     if (tm->tm_isdst) dst = istrue;
-    sprintf(local_hour,   "%d", tm->tm_hour);
-    sprintf(local_minute, "%d", tm->tm_min);
-    sprintf(local_second, "%d", tm->tm_sec);
-    sprintf(local_year,   "%d", tm->tm_year + 1900);
-    sprintf(local_month,  "%d", tm->tm_mon + 1);
-    sprintf(local_day,    "%d", tm->tm_mday);
+    snprintf(local_hour,   sizeof(local_hour),   "%d", tm->tm_hour);
+    snprintf(local_minute, sizeof(local_minute), "%d", tm->tm_min);
+    snprintf(local_second, sizeof(local_second), "%d", tm->tm_sec);
+    snprintf(local_year,   sizeof(local_year),   "%d", tm->tm_year + 1900);
+    snprintf(local_month,  sizeof(local_month),  "%d", tm->tm_mon + 1);
+    snprintf(local_day,    sizeof(local_day),    "%d", tm->tm_mday);
 
     /* TZ string for the SOAP response.
      * ONVIF_TZ_STRING env var (set by start_onvif.sh) takes full precedence --
@@ -395,6 +395,39 @@ int device_system_reboot()
     return ret;
 }
 
+int device_set_system_factory_default()
+{
+    const char *fd_type;
+    int ret;
+
+    /* Opt-in: without a configured command the operation is not supported. */
+    if ((service_ctx.factory_default_command == NULL) ||
+            (service_ctx.factory_default_command[0] == '\0')) {
+        return send_action_not_supported_fault("device_service");
+    }
+
+    /* FactoryDefault is "Hard" or "Soft" (default Hard). Pass it to the hook via
+     * an env var -- never interpolated into the shell command -- so the request
+     * cannot inject shell syntax. */
+    fd_type = get_element("FactoryDefault", "Body");
+    if ((fd_type != NULL) && (strcmp(fd_type, "Soft") == 0))
+        setenv("ONVIF_FACTORY_DEFAULT_TYPE", "Soft", 1);
+    else
+        setenv("ONVIF_FACTORY_DEFAULT_TYPE", "Hard", 1);
+
+    long size = cat(NULL, "device_service_files/SetSystemFactoryDefault.xml", 0);
+    output_http_headers(size);
+    ret = cat("stdout", "device_service_files/SetSystemFactoryDefault.xml", 0);
+    fflush(stdout);
+    sleep(1);
+
+    /* Fire-and-forget action (the command typically wipes config and reboots) --
+     * same "respond, then act" flow as device_system_reboot(). */
+    system(service_ctx.factory_default_command);
+
+    return ret;
+}
+
 int device_get_scopes()
 {
     int i;
@@ -412,7 +445,7 @@ int device_get_scopes()
 
     scopes[0] = '\0';
     for (i = 0; i < service_ctx.scopes_num; i++) {
-        sprintf(line, "\t    <tds:Scopes>\n\t\t<tt:ScopeDef>Fixed</tt:ScopeDef>\n\t\t<tt:ScopeItem>%s</tt:ScopeItem>\n\t    </tds:Scopes>\n", service_ctx.scopes[i]);
+        snprintf(line, sizeof(line), "\t    <tds:Scopes>\n\t\t<tt:ScopeDef>Fixed</tt:ScopeDef>\n\t\t<tt:ScopeItem>%s</tt:ScopeItem>\n\t    </tds:Scopes>\n", service_ctx.scopes[i]);
         strncat(scopes, line, alloc - strlen(scopes) - 1);
     }
 
@@ -431,7 +464,7 @@ int device_get_scopes()
 int device_get_users()
 {
     // For security reason, returns empty message instead of service_ctx.user
-    send_empty_response("tds", "GetUsers");
+    return send_empty_response("tds", "GetUsers");
 }
 
 int device_get_wsdl_url()
@@ -480,40 +513,40 @@ int device_get_capabilities()
 
     port[0] = '\0';
     if (service_ctx.port != 80)
-        sprintf(port, ":%d", service_ctx.port);
-    sprintf(device_service_address, "http://%s%s/onvif/device_service", service_ctx.address_url, port);
-    sprintf(media_service_address, "http://%s%s/onvif/media_service", service_ctx.address_url, port);
-    sprintf(ptz_service_address, "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
-    sprintf(events_service_address, "http://%s%s/onvif/events_service", service_ctx.address_url, port);
-    sprintf(deviceio_service_address, "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
+        snprintf(port, sizeof(port), ":%d", service_ctx.port);
+    snprintf(device_service_address, sizeof(device_service_address), "http://%s%s/onvif/device_service", service_ctx.address_url, port);
+    snprintf(media_service_address, sizeof(media_service_address), "http://%s%s/onvif/media_service", service_ctx.address_url, port);
+    snprintf(ptz_service_address, sizeof(ptz_service_address), "http://%s%s/onvif/ptz_service", service_ctx.address_url, port);
+    snprintf(events_service_address, sizeof(events_service_address), "http://%s%s/onvif/events_service", service_ctx.address_url, port);
+    snprintf(deviceio_service_address, sizeof(deviceio_service_address), "http://%s%s/onvif/deviceio_service", service_ctx.address_url, port);
 
     if ((service_ctx.events_enable == EVENTS_PULLPOINT) || (service_ctx.events_enable == EVENTS_BOTH)) {
-        strcpy(epullpoint, "true");
+        snprintf(epullpoint, sizeof(epullpoint), "%s", "true");
     } else {
-        strcpy(epullpoint, "false");
+        snprintf(epullpoint, sizeof(epullpoint), "%s", "false");
     }
     if ((service_ctx.events_enable == EVENTS_BASESUBSCRIPTION) || (service_ctx.events_enable == EVENTS_BOTH)) {
-        strcpy(ebasesubscription, "true");
+        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "true");
     } else {
-        strcpy(ebasesubscription, "false");
+        snprintf(ebasesubscription, sizeof(ebasesubscription), "%s", "false");
     }
 
     if ((service_ctx.profiles[0].audio_encoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_encoder != AUDIO_NONE))) {
 
-        sprintf(audio_sources, "%d", 1);
+        snprintf(audio_sources, sizeof(audio_sources), "%d", 1);
     } else {
-        sprintf(audio_sources, "%d", 0);
+        snprintf(audio_sources, sizeof(audio_sources), "%d", 0);
     }
     if ((service_ctx.profiles[0].audio_decoder != AUDIO_NONE) ||
             ((service_ctx.profiles_num == 2) && (service_ctx.profiles[1].audio_decoder != AUDIO_NONE))) {
 
-        sprintf(audio_outputs, "%d", 1);
+        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 1);
     } else {
-        sprintf(audio_outputs, "%d", 0);
+        snprintf(audio_outputs, sizeof(audio_outputs), "%d", 0);
     }
 
-    sprintf(relay_outputs, "%d", service_ctx.relay_outputs_num);
+    snprintf(relay_outputs, sizeof(relay_outputs), "%d", service_ctx.relay_outputs_num);
 
     if (icategory == 1) {
         long size = cat(NULL, "device_service_files/GetDeviceCapabilities.xml", 2,
@@ -634,12 +667,12 @@ int device_get_network_interfaces()
         return -1;
     }
     prefix_len = netmask2prefixlen(netmask);
-    sprintf(sprefix_len, "%d", prefix_len);
+    snprintf(sprefix_len, sizeof(sprefix_len), "%d", prefix_len);
     ret = get_mac_address(mac_address, service_ctx.ifs);
     if (ret < 0) {
         mac_address[0] = '\0';
     }
-    sprintf(mtu, "%d", get_mtu(service_ctx.ifs));
+    snprintf(mtu, sizeof(mtu), "%d", get_mtu(service_ctx.ifs));
 
     ipv6_found = get_ipv6_address(service_ctx.ifs, ll_addr, &ll_prefix, gl_addr, &gl_prefix);
     if (ipv6_found > 0) {
@@ -655,13 +688,13 @@ int device_get_network_interfaces()
                 "<tt:FromRA><tt:Address>%s</tt:Address>"
                 "<tt:PrefixLength>%d</tt:PrefixLength></tt:FromRA>",
                 gl_addr, gl_prefix);
-        strncpy(ipv6_enabled, "true", sizeof(ipv6_enabled));
+        snprintf(ipv6_enabled, sizeof(ipv6_enabled), "%s", "true");
         snprintf(ipv6_config, sizeof(ipv6_config),
             "<tt:Config><tt:AcceptRouterAdvert>true</tt:AcceptRouterAdvert>"
             "<tt:DHCP>Off</tt:DHCP>%s%s</tt:Config>",
             ll_elem, gl_elem);
     } else {
-        strncpy(ipv6_enabled, "false", sizeof(ipv6_enabled));
+        snprintf(ipv6_enabled, sizeof(ipv6_enabled), "%s", "false");
         ipv6_config[0] = '\0';
     }
 
@@ -808,9 +841,8 @@ int device_get_ntp()
 
 int device_unsupported(const char *method)
 {
-    if (service_ctx.adv_fault_if_unknown == 1)
-        send_action_failed_fault("device_service", -1);
-    else
-        send_empty_response("tds", (char *) method);
-    return -1;
+    /* An unimplemented action must return a SOAP fault, not an empty 200
+     * response (ONVIF: env:Receiver / ter:ActionNotSupported). */
+    (void) method;
+    return send_action_not_supported_fault("device_service");
 }

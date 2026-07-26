@@ -229,7 +229,7 @@ int gzip_d(FILE *file_out, char *file_in)
     char buf[1024];
     char file_in_gz[MAX_LEN];
 
-    sprintf(file_in_gz, "%s.gz", file_in);
+    snprintf(file_in_gz, sizeof(file_in_gz), "%s.gz", file_in);
     gzFile fi;
     if (access(file_in_gz, F_OK) == 0) {
         fi = gzopen(file_in_gz, "rb");
@@ -406,7 +406,7 @@ long cat(char *out, char *filename, int num, ...)
                 if (prefix_len + sub_len + suffix_len < MAX_CAT_LEN - 1) {
                     strncpy(new_line, line, prefix_len);
                     new_line[prefix_len] = '\0'; // Ensure null termination
-                    strcpy(&new_line[prefix_len], par_to_sub);
+                    snprintf(&new_line[prefix_len], sizeof(new_line) - prefix_len, "%s", par_to_sub);
                     strncpy(&new_line[prefix_len + sub_len], pare, suffix_len);
                     new_line[prefix_len + sub_len + suffix_len] = '\0'; // Ensure null termination
                 } else {
@@ -415,7 +415,7 @@ long cat(char *out, char *filename, int num, ...)
                 }
             }
             if (new_line[0] != '\0') {
-                strcpy(line, new_line);
+                snprintf(line, sizeof(line), "%s", new_line);
                 memset(new_line, '\0', sizeof(new_line));
             }
         }
@@ -580,7 +580,7 @@ int get_mac_address(char *address, char *name)
     const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
 
     for (; it != end; ++it) {
-        strcpy(ifr.ifr_name, it->ifr_name);
+        snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", it->ifr_name);
         if (strcmp(name, ifr.ifr_name) == 0) {
             if (ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
                 if (! (ifr.ifr_flags & IFF_LOOPBACK)) {
@@ -594,7 +594,7 @@ int get_mac_address(char *address, char *name)
     }
 
     if (success) {
-        sprintf(address, "%02x:%02x:%02x:%02x:%02x:%02x",
+        snprintf(address, 18, "%02x:%02x:%02x:%02x:%02x:%02x",
                 (unsigned char) ifr.ifr_hwaddr.sa_data[0],
                 (unsigned char) ifr.ifr_hwaddr.sa_data[1],
                 (unsigned char) ifr.ifr_hwaddr.sa_data[2],
@@ -645,7 +645,7 @@ int get_mtu(char *if_name)
     int ret = 0;
     int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
     struct ifreq ifr;
-    strcpy(ifr.ifr_name, if_name);
+    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", if_name);
     if(ioctl(sock, SIOCGIFMTU, &ifr) == 0) {
         ret = ifr.ifr_mtu;
     }
@@ -883,7 +883,7 @@ int html_escape(char *url, int max_len)
     }
     *t = '\0'; // Ensure null termination
 
-    strcpy(url, (char *) s_tmp);
+    snprintf(url, max_len, "%s", (char *) s_tmp);
 }
 
 /**
@@ -1064,7 +1064,7 @@ int to_iso_date(char *iso_date, int size, time_t timestamp)
 
     if (size < 21) return -1;
 
-    sprintf(iso_date, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+    snprintf(iso_date, size, "%04d-%02d-%02dT%02d:%02d:%02dZ",
             my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday,
             my_tm.tm_hour, my_tm.tm_min, my_tm.tm_sec);
 
@@ -1213,7 +1213,7 @@ int get_mac_by_ifname(const char *if_name, uint8_t mac_out[6])
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) return -1;
     memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, if_name, IFNAMSIZ - 1);
+    snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", if_name);
     ret = ioctl(fd, SIOCGIFHWADDR, &ifr);
     close(fd);
     if (ret < 0) return -1;
@@ -1231,7 +1231,7 @@ int get_mac_by_ip(const char *ip_str, uint8_t mac_out[6])
         if (!ifa->ifa_addr || ifa->ifa_addr->sa_family != AF_INET) continue;
         char buf[16];
         inet_ntop(AF_INET, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr, buf, sizeof(buf));
-        if (strcmp(buf, ip_str) == 0) { strncpy(found, ifa->ifa_name, IFNAMSIZ - 1); break; }
+        if (strcmp(buf, ip_str) == 0) { snprintf(found, sizeof(found), "%s", ifa->ifa_name); break; }
     }
     freeifaddrs(ifap);
     return (found[0] == '\0') ? -1 : get_mac_by_ifname(found, mac_out);
@@ -1264,11 +1264,11 @@ int get_ifname_by_addr(const char *addr_str, char *ifname, size_t len)
         if (!is_v6 && ifa->ifa_addr->sa_family == AF_INET) {
             inet_ntop(AF_INET, &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
                       buf, sizeof(buf));
-            if (strcmp(buf, clean) == 0) { strncpy(found, ifa->ifa_name, IFNAMSIZ - 1); break; }
+            if (strcmp(buf, clean) == 0) { snprintf(found, sizeof(found), "%s", ifa->ifa_name); break; }
         } else if (is_v6 && ifa->ifa_addr->sa_family == AF_INET6) {
             inet_ntop(AF_INET6, &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
                       buf, sizeof(buf));
-            if (strcmp(buf, clean) == 0) { strncpy(found, ifa->ifa_name, IFNAMSIZ - 1); break; }
+            if (strcmp(buf, clean) == 0) { snprintf(found, sizeof(found), "%s", ifa->ifa_name); break; }
         }
     }
     freeifaddrs(ifap);
@@ -1306,7 +1306,7 @@ int detect_outbound_address_v6(char *addr_str, size_t len, unsigned int *if_idx_
         if (found_global && IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr)) continue;
         char buf[INET6_ADDRSTRLEN];
         if (!inet_ntop(AF_INET6, &s6->sin6_addr, buf, sizeof(buf))) continue;
-        strncpy(best, buf, INET6_ADDRSTRLEN - 1);
+        snprintf(best, sizeof(best), "%s", buf);
         best_idx = if_nametoindex(ifa->ifa_name);
         if (!IN6_IS_ADDR_LINKLOCAL(&s6->sin6_addr)) { found_global = 1; break; }
     }
@@ -1551,16 +1551,16 @@ int set_video_codec(char *buffer, int buffer_len, int codec, int ver)
     if (buffer_len < 16) return -1;
 
     if (codec == JPEG) {
-        sprintf(buffer, "JPEG");
+        snprintf(buffer, buffer_len, "JPEG");
     } else if (codec == MPEG4) {
-        sprintf(buffer, "MPEG4");
+        snprintf(buffer, buffer_len, "MPEG4");
     } else if (codec == H264) {
-        sprintf(buffer, "H264");
+        snprintf(buffer, buffer_len, "H264");
     } else if (codec == H265) {
         if (ver == 1) {
-            sprintf(buffer, "H264");
+            snprintf(buffer, buffer_len, "H264");
         } else {
-            sprintf(buffer, "H265");
+            snprintf(buffer, buffer_len, "H265");
         }
     } else {
         return -2;
@@ -1583,17 +1583,17 @@ int set_audio_codec(char *buffer, int buffer_len, int codec, int ver)
 
     if (codec == G711) {
         if (ver == 1) {
-            sprintf(buffer, "G711");
+            snprintf(buffer, buffer_len, "G711");
         } else {
-            sprintf(buffer, "PCMU");
+            snprintf(buffer, buffer_len, "PCMU");
         }
     } else if (codec == G726) {
-        sprintf(buffer, "G726");
+        snprintf(buffer, buffer_len, "G726");
     } else if (codec == AAC) {
         if (ver == 1) {
-            sprintf(buffer, "AAC");
+            snprintf(buffer, buffer_len, "AAC");
         } else {
-            sprintf(buffer, "MPEG4-GENERIC");
+            snprintf(buffer, buffer_len, "MPEG4-GENERIC");
         }
     } else {
         return -2;
@@ -1626,7 +1626,7 @@ topic_expressions_t *parse_topic_expression(const char *input)
         return NULL;
     }
 
-    strcpy(input_copy, input);
+    snprintf(input_copy, sizeof(input_copy), "%s", input);
 
     char *token = strtok(input_copy, "|");
     while (token != NULL) {
@@ -1651,7 +1651,7 @@ topic_expressions_t *parse_topic_expression(const char *input)
         }
         out->topics[number - 1].match_sub_tree = 0;
         str = out->topics[number - 1].topic;
-        strcpy(str, token);
+        snprintf(str, len + 1, "%s", token);
 
         if (str[len - 3] == '/' && str[len - 2] == '/' && str[len - 1] == '.') {
             str[len - 3] = '\0';
@@ -1770,7 +1770,7 @@ static int is_valid_hostname_or_ip(const char *s)
  * Fork /bin/sh -c cmd, capture stdout, kill child after timeout_sec seconds.
  * Returns bytes captured (null-terminated in buf), or -1 on fork failure.
  */
-static ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout_sec)
+ssize_t spawn_capture(const char *cmd, char *buf, size_t len, int timeout_sec)
 {
     if (len == 0) return -1;
     int pipefd[2];

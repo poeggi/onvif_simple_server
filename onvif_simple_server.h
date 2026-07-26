@@ -129,6 +129,8 @@ typedef struct {
     int adv_fault_if_set;
     int adv_synology_nvr;
 
+    char *factory_default_command;   /* SetSystemFactoryDefault hook; NULL = op not supported */
+
     stream_profile_t *profiles;
     int profiles_num;
 
