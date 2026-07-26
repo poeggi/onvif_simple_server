@@ -73,6 +73,7 @@ typedef struct {
 
 typedef struct {
     int enable;
+    int zoom_enable;
     double min_step_x;
     double max_step_x;
     double min_step_y;
