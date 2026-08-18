@@ -802,7 +802,7 @@ int media_get_compatible_video_encoder_configurations()
 
 int media_get_video_encoder_configuration_options()
 {
-    char stmp_w[16], stmp_h[16];
+    char stmp_w[16], stmp_h[16], stmp_fps[16];
     const char *configuration_token = get_element("ConfigurationToken", "Body");
     const char *profile_token = get_element("ProfileToken", "Body");
     char vec_token[128];
@@ -828,32 +828,38 @@ int media_get_video_encoder_configuration_options()
 
         snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
         snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
-        long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 6,
+        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[0].framerate > 0 ? service_ctx.profiles[0].framerate : 30);
+        long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
+                "%FRAMERATE%", stmp_fps,
                 "%PROFILE%", "High");
 
         output_http_headers(size);
 
-        return cat("stdout", "media_service_files/GetVideoEncoderConfigurationOptions.xml", 6,
+        return cat("stdout", "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
+                "%FRAMERATE%", stmp_fps,
                 "%PROFILE%", "High");
 
     } else if ((service_ctx.profiles_num == 2) && profile_idx == 1) {
 
         snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[1].width);
         snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[1].height);
-        long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 6,
+        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[1].framerate > 0 ? service_ctx.profiles[1].framerate : 30);
+        long size = cat(NULL, "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
+                "%FRAMERATE%", stmp_fps,
                 "%PROFILE%", "Main");
 
         output_http_headers(size);
 
-        return cat("stdout", "media_service_files/GetVideoEncoderConfigurationOptions.xml", 6,
+        return cat("stdout", "media_service_files/GetVideoEncoderConfigurationOptions.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
+                "%FRAMERATE%", stmp_fps,
                 "%PROFILE%", "Main");
 
     } else {
