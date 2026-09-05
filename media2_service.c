@@ -28,6 +28,27 @@
 
 extern service_context_t service_ctx;
 
+/*
+ * The ONVIF VideoSource models the physical sensor, which is independent of any
+ * single encoder profile. Report it from the profile with the largest frame area
+ * so a low resolution sub stream never shrinks the advertised source dimensions.
+ */
+static int get_video_source_index()
+{
+    int i, idx = 0;
+    long best = -1;
+
+    for (i = 0; i < service_ctx.profiles_num; i++) {
+        long area = (long) service_ctx.profiles[i].width * service_ctx.profiles[i].height;
+        if (area > best) {
+            best = area;
+            idx = i;
+        }
+    }
+
+    return idx;
+}
+
 int media2_get_service_capabilities()
 {
     char cap[256];
@@ -77,6 +98,7 @@ int media2_get_profiles()
     char *dest;
     int typeVSC = 0, typeASC = 0, typeVEC = 0, typeAEC = 0, typePTZ = 0, typeAOC = 0, typeADC = 0;
     char min_x[256], max_x[256], min_y[256], max_y[256], min_z[256], max_z[256];
+    int vsrc = get_video_source_index();
 
     audio_enc_h[0] = '\0';
     audio_enc_l[0] = '\0';
@@ -167,9 +189,9 @@ int media2_get_profiles()
                 size += cat(dest, "media2_service_files/GetProfiles_confstart.xml", 0);
 
                 if (typeVSC) {
-                    // Get VideoSource from Profile_0
-                    snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
-                    snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
+                    // Get VideoSource from the largest profile
+                    snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[vsrc].width);
+                    snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[vsrc].height);
                     size += cat(dest, "media2_service_files/GetProfiles_VSC.xml", 6,
                             "%PROFILES_NUM%", profiles_num,
                             "%VSC_WIDTH%", stmp_w_h,
@@ -184,8 +206,8 @@ int media2_get_profiles()
                     }
                 }
                 if (typeVEC) {
-                    snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
-                    snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
+                    snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[h].width);
+                    snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[h].height);
                     set_video_codec(video_enc_h, 16, service_ctx.profiles[h].type, 2);
                     size += cat(dest, "media2_service_files/GetProfiles_VEC.xml", 10,
                             "%H264PROFILE%", h264profile[h],
@@ -246,9 +268,9 @@ int media2_get_profiles()
                 size += cat(dest, "media2_service_files/GetProfiles_confstart.xml", 0);
 
                 if (typeVSC) {
-                    // Get VideoSource from Profile_0
-                    snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[0].width);
-                    snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[0].height);
+                    // Get VideoSource from the largest profile
+                    snprintf(stmp_w_h, sizeof(stmp_w_h), "%d", service_ctx.profiles[vsrc].width);
+                    snprintf(stmp_h_h, sizeof(stmp_h_h), "%d", service_ctx.profiles[vsrc].height);
                     size += cat(dest, "media2_service_files/GetProfiles_VSC.xml", 6,
                             "%PROFILES_NUM%", profiles_num,
                             "%VSC_WIDTH%", stmp_w_h,
@@ -314,9 +336,9 @@ int media2_get_profiles()
                 size += cat(dest, "media2_service_files/GetProfiles_confstart.xml", 0);
 
                 if (typeVSC) {
-                    // Get VideoSource from Profile_0
-                    snprintf(stmp_w_l, sizeof(stmp_w_l), "%d", service_ctx.profiles[0].width);
-                    snprintf(stmp_h_l, sizeof(stmp_h_l), "%d", service_ctx.profiles[0].height);
+                    // Get VideoSource from the largest profile
+                    snprintf(stmp_w_l, sizeof(stmp_w_l), "%d", service_ctx.profiles[vsrc].width);
+                    snprintf(stmp_h_l, sizeof(stmp_h_l), "%d", service_ctx.profiles[vsrc].height);
                     size += cat(dest, "media2_service_files/GetProfiles_VSC.xml", 6,
                             "%PROFILES_NUM%", profiles_num,
                             "%VSC_WIDTH%", stmp_w_l,
@@ -385,12 +407,13 @@ int media2_get_video_source_modes()
 
     if (strcasecmp("VideoSourceToken", token) == 0) {
 
-        // Get data from profile 0
+        // Get data from the largest profile (the physical source)
         char stmp_fps[8];
-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
-        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[0].framerate);
-        set_video_codec(video_enc, 16, service_ctx.profiles[0].type, 2);
+        int vsrc = get_video_source_index();
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
+        snprintf(stmp_fps, sizeof(stmp_fps), "%d", service_ctx.profiles[vsrc].framerate);
+        set_video_codec(video_enc, 16, service_ctx.profiles[vsrc].type, 2);
         long size = cat(NULL, "media2_service_files/GetVideoSourceModes.xml", 8,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h,
@@ -432,9 +455,10 @@ int media2_get_video_source_configurations()
             (strcasecmp(service_ctx.profiles[1].name, token) == 0) ||
             (strcasecmp("VideoSourceConfigToken", token) == 0)) {
 
+        int vsrc = get_video_source_index();
         snprintf(profiles_num, sizeof(profiles_num), "%d", service_ctx.profiles_num);
-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
         long size = cat(NULL, "media2_service_files/GetVideoSourceConfigurations.xml", 6,
                 "%PROFILES_NUM%", profiles_num,
                 "%WIDTH%", stmp_w,
@@ -473,8 +497,9 @@ int media2_get_video_source_configuration_options()
             (strcasecmp(service_ctx.profiles[1].name, token) == 0) ||
             (strcasecmp("VideoSourceConfigToken", token) == 0)) {
 
-        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[0].width);
-        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[0].height);
+        int vsrc = get_video_source_index();
+        snprintf(stmp_w, sizeof(stmp_w), "%d", service_ctx.profiles[vsrc].width);
+        snprintf(stmp_h, sizeof(stmp_h), "%d", service_ctx.profiles[vsrc].height);
         long size = cat(NULL, "media2_service_files/GetVideoSourceConfigurationOptions.xml", 4,
                 "%WIDTH%", stmp_w,
                 "%HEIGHT%", stmp_h);
